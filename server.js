@@ -1,33 +1,44 @@
 const express = require('express');
 const app = express();
-const axios = require('axios');
+const { WebClient } = require('@slack/web-api');
 const port = 3000;
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
-function notifySlack(photographer, bookingTime, cancellationTime) {
-  const token =
-    'xoxe.xoxp-1-Mi0yLTEyMzk0MDY0NzIzODQtNzE4MDIzMDc0MjYxMi03MjQxNTMyMDE1ODEyLTcyNTE3MjA5ODA1NDUtOTEwZmVmOWM5ZTUxZjFkNjNjNWJlYmM1NjU3ODY0NzBkYmYxMjVkMTJjNTE0OGM5ODE5MmMyMTNjZmQ1MGM3Yg ';
-  const channelId = 'C0770TLKYUB'; // Replace with the channel ID
+const token = 'xoxb-1239406472384-7245104674869-12IL8jyjJqTn36OZHIC0zJv6'; // Replace with your actual token
+const channelId = 'C0770TLKYUB'; // Replace with your Slack channel ID
 
+const web = new WebClient(token);
+
+function notifySlack(photographer, bookingTime, cancellationTime) {
   const text = `${photographer}'s booking was cancelled. Booking Time was ${bookingTime} and cancelled at ${cancellationTime}`;
 
-  axios
-    .post(
-      'https://slack.com/api/chat.postMessage',
-      { channel: channelId, text: text },
-      { headers: { authorization: `Bearer ${token}` } },
-    )
+  web.chat
+    .postMessage({
+      channel: channelId,
+      text: text,
+    })
     .then((res) => {
-      console.log(`Notification sent: ${res.data}`);
+      console.log('Message sent: ', res.ts);
     })
     .catch((error) => {
-      console.error(`Error in sending notification: ${error.message}`);
+      console.error('Error:', error);
     });
 }
-notifySlack('testing', 'testing', '2024/08/01');
+
+notifySlack('test', 'test', 'test');
+app.get('/notifySlack', (req, res) => {
+  // Calls notifySlack function with parameters supplied by the user
+  const photographer = req.query.photographer;
+  const bookingTime = req.query.bookingTime;
+  const cancellationTime = req.query.cancellationTime;
+
+  notifySlack(photographer, bookingTime, cancellationTime);
+
+  res.send('Notification sent to Slack!');
+});
 
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
