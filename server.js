@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const app = express();
 const { WebClient } = require('@slack/web-api');
@@ -7,8 +9,8 @@ app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
-const token = 'xoxb-1239406472384-7245104674869-12IL8jyjJqTn36OZHIC0zJv6'; // Replace with your actual token
-const channelId = 'C0770TLKYUB'; // Replace with your Slack channel ID
+const token = process.env.SLACK_BOT_TOKEN; // Replace with your actual token
+const channelId = process.env.SLACK_CHANNEL_ID; // Replace with your Slack channel ID
 
 const web = new WebClient(token);
 
@@ -28,7 +30,7 @@ function notifySlack(photographer, bookingTime, cancellationTime) {
     });
 }
 
-notifySlack('test', 'test', 'test');
+// notifySlack('test', 'test', 'test');
 app.get('/notifySlack', (req, res) => {
   // Calls notifySlack function with parameters supplied by the user
   const photographer = req.query.photographer;
