@@ -1,7 +1,10 @@
 require('dotenv').config();
-
+const moment = require('moment-timezone'); // Import moment-timezone
 const express = require('express');
 const app = express();
+app.use(express.urlencoded({ extended: true }));
+app.use(express.text()); // For parsing raw text
+
 const { WebClient } = require('@slack/web-api');
 const port = 3000;
 
@@ -14,7 +17,7 @@ const channelId = process.env.SLACK_CHANNEL_ID; // Replace with your Slack chann
 
 const web = new WebClient(token);
 
-function notifySlack(photographer, bookingTime, cancellationTime) {
+function cancelNotifyToSlack(photographer = "", bookingTime, cancellationTime) {
   const text = `${photographer}'s booking was cancelled. Booking Time was ${bookingTime} and cancelled at ${cancellationTime}`;
 
   web.chat
@@ -30,16 +33,45 @@ function notifySlack(photographer, bookingTime, cancellationTime) {
     });
 }
 
-// notifySlack('test', 'test', 'test');
-app.get('/notifySlack', (req, res) => {
-  // Calls notifySlack function with parameters supplied by the user
-  const photographer = req.query.photographer;
-  const bookingTime = req.query.bookingTime;
-  const cancellationTime = req.query.cancellationTime;
+app.post('/webhook', (req, res) => {
+  const data = JSON.parse(req.body);
 
-  notifySlack(photographer, bookingTime, cancellationTime);
+  const timezone = data.property_address.timezone;
+  console.log("Timezone:", timezone);
 
-  res.send('Notification sent to Slack!');
+  // Prepare date and time
+  const bookingDate = moment.tz(data.date, "dddd, DD MMM, YYYY", timezone); // Parse date
+  console.log("bookingDate:", bookingDate);
+  const scheduledTimeStart = moment.tz(data.scheduled_time.split(' - ')[0], ["h:mm A"], timezone); // Parse start time
+  console.log("scheduledTimeStart:", scheduledTimeStart);
+
+  // Merge date and time
+  bookingDate.set({
+    hour: scheduledTimeStart.get('hour'),
+    minute: scheduledTimeStart.get('minute')
+  });
+
+  console.log("bookingDate:", bookingDate);
+
+  const scheduledStartTime = bookingDate.toDate(); // Convert to JavaScript date
+  console.log("scheduledStartTime:", scheduledStartTime);
+
+  // Create a date object for current time in the given timezone
+  const currentDateTime = moment.tz(new Date(), timezone).toDate();
+  console.log("currentDateTime:", currentDateTime);
+
+  // Calculate the difference in hours
+  const timeDifferenceInHours = (scheduledStartTime.getTime() - currentDateTime.getTime()) / (1000 * 60 * 60);
+
+  // Testing output
+  // console.log(`Time difference: ${timeDifferenceInHours}`);
+
+  // If the time difference is less than or equal to 4 hours, trigger the Slack notification
+  if (data.orderStatus === 'cancelled') {
+    cancelNotifyToSlack(scheduledStartTime, currentDateTime);
+  }
+
+  res.send('Data processed!');
 });
 
 app.listen(port, () => {
