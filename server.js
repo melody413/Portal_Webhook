@@ -17,24 +17,8 @@ const channelId = process.env.SLACK_CHANNEL_ID; // Replace with your Slack chann
 
 const web = new WebClient(token);
 
-function cancelNotifyToSlack(photographer = "", bookingTime, cancellationTime) {
-  const simpleBookingTime = moment(bookingTime).format('MMMM Do, YYYY h:mm A');
-  const simpleCancellationTime = moment(cancellationTime).format('MMMM Do, YYYY h:mm A');
 
-  const text = `*Booking Cancelled* \nPhotographer: ${photographer} \nBooking Time: ${simpleBookingTime} \nCancelled Time: ${simpleCancellationTime}`;
-
-  web.chat
-    .postMessage({
-      channel: channelId,
-      text: text,
-    })
-    .then((res) => {
-      console.log('Message sent: ', res.ts);
-    })
-    .catch((error) => {
-      console.error('Error:', error);
-    });
-}
+//--------------------------------------API--------------------------------------------------//
 
 app.post('/webhook', (req, res) => {
   const data = JSON.parse(req.body);
@@ -51,7 +35,7 @@ app.post('/webhook', (req, res) => {
     minute: scheduledTimeStart.get('minute')
   });
 
-  console.log("bookingDate:", bookingDate);
+  // console.log("bookingDate:", bookingDate);
 
   const scheduledStartTime = bookingDate.toDate();
   console.log("scheduledStartTime:", scheduledStartTime);
@@ -77,3 +61,34 @@ app.post('/webhook', (req, res) => {
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
+
+//--------------------------------------Function---------------------------------------------//
+
+/**
+ * This function is responsible for sending a cancellation alert to a Slack channel.
+ * It takes the photographer's name, the time of booking, 
+ * and the time of cancellation as parameters, formats these details, 
+ * and sends a pre-formatted message to the Slack channel.
+ *
+ * @param {string} photographer - The name of the photographer.
+ * @param {Date} bookingTime - The date and time when the booking was initially made.
+ * @param {Date} cancellationTime - The date and time when the booking was cancelled.
+ */
+function cancelNotifyToSlack(photographer = "", bookingTime, cancellationTime) {
+  const simpleBookingTime = moment(bookingTime).format('MMMM Do, YYYY h:mm A');
+  const simpleCancellationTime = moment(cancellationTime).format('MMMM Do, YYYY h:mm A');
+
+  const text = `*Booking Cancelled* \nPhotographer: ${photographer} \nBooking Time: ${simpleBookingTime} \nCancelled Time: ${simpleCancellationTime}`;
+
+  web.chat
+    .postMessage({
+      channel: channelId,
+      text: text,
+    })
+    .then((res) => {
+      console.log('Message sent: ', res.ts);
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+    });
+}
