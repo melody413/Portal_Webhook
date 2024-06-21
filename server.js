@@ -18,7 +18,10 @@ const channelId = process.env.SLACK_CHANNEL_ID; // Replace with your Slack chann
 const web = new WebClient(token);
 
 function cancelNotifyToSlack(photographer = "", bookingTime, cancellationTime) {
-  const text = `${photographer}'s booking was cancelled. Booking Time was ${bookingTime} and cancelled at ${cancellationTime}`;
+  const simpleBookingTime = moment(bookingTime).format('MMMM Do, YYYY h:mm A');
+  const simpleCancellationTime = moment(cancellationTime).format('MMMM Do, YYYY h:mm A');
+
+  const text = `*Booking Cancelled* \nPhotographer: ${photographer} \nBooking Time: ${simpleBookingTime} \nCancelled Time: ${simpleCancellationTime}`;
 
   web.chat
     .postMessage({
@@ -37,13 +40,10 @@ app.post('/webhook', (req, res) => {
   const data = JSON.parse(req.body);
 
   const timezone = data.property_address.timezone;
-  console.log("Timezone:", timezone);
+  // console.log("Timezone:", timezone);
 
-  // Prepare date and time
-  const bookingDate = moment.tz(data.date, "dddd, DD MMM, YYYY", timezone); // Parse date
-  console.log("bookingDate:", bookingDate);
-  const scheduledTimeStart = moment.tz(data.scheduled_time.split(' - ')[0], ["h:mm A"], timezone); // Parse start time
-  console.log("scheduledTimeStart:", scheduledTimeStart);
+  const bookingDate = moment.tz(data.date, "dddd, DD MMM, YYYY", timezone);
+  const scheduledTimeStart = moment.tz(data.scheduled_time.split(' - ')[0], ["h:mm A"], timezone);
 
   // Merge date and time
   bookingDate.set({
@@ -53,7 +53,7 @@ app.post('/webhook', (req, res) => {
 
   console.log("bookingDate:", bookingDate);
 
-  const scheduledStartTime = bookingDate.toDate(); // Convert to JavaScript date
+  const scheduledStartTime = bookingDate.toDate();
   console.log("scheduledStartTime:", scheduledStartTime);
 
   // Create a date object for current time in the given timezone
@@ -67,8 +67,8 @@ app.post('/webhook', (req, res) => {
   // console.log(`Time difference: ${timeDifferenceInHours}`);
 
   // If the time difference is less than or equal to 4 hours, trigger the Slack notification
-  if (data.orderStatus === 'cancelled') {
-    cancelNotifyToSlack(scheduledStartTime, currentDateTime);
+  if (timeDifferenceInHours <= 4 && data.orderStatus === 'cancelled') {
+    cancelNotifyToSlack("", scheduledStartTime, currentDateTime);
   }
 
   res.send('Data processed!');
