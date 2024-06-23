@@ -22,7 +22,7 @@ const web = new WebClient(token);
 
 app.post('/booking-cancel', (req, res) => {
   const data = JSON.parse(req.body);
-  console.log("111111**************************:", data);
+  console.log("11111**************************:", data);
 
   if (data.orderStatus === 'cancelled') {
     const orderName = data.orderName;
@@ -74,14 +74,13 @@ app.post('/webhook', (req, res) => {
 
       if (doNotSendPhotographers.hasOwnProperty(photographerName)) {
         if (doNotSendPhotographers[photographerName].includes(data.client_full_name)) {
-          // await webhook.send({
-          //   text: `Photographer ${photographerName} is booked with customer ${data.client_full_name}!`,
-          // });
           customer2PhotographerNotifyToSlack(data.orderName, data.date, data.scheduled_time, data.client_full_name, photographerName,)
         }
       }
     }
   }
+  res.send('Data processed!');
+
 });
 
 app.listen(port, () => {
@@ -136,8 +135,8 @@ function cancelNotifyToSlack(photographer = "", orderName, bookingTime, cancella
  * If the message is sent successfully, a console log with the message receipt timestamp is shown.
  * If an error happens during message transmission, the error is caught and logged to the console.
  */
-function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time, customer, photographer, simpleBookingTime) {
-  const text = `*Booking created*\nOrder name: ${orderName} \nOrder name: ${orderDate}, ${schedule_time} \nCustomer: ${customer} \nPhotographer: ${photographer} \nBooking Time: ${simpleBookingTime}`;
+function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time, customer, photographer,) {
+  const text = `*Booking created*\nOrder name: ${orderName} \nBooking Time: ${orderDate}, ${schedule_time} \nCustomer: ${customer} \nPhotographer: ${photographer}`;
 
   web.chat
     .postMessage({
