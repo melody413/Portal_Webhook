@@ -23,36 +23,32 @@ const web = new WebClient(token);
 app.post('/webhook', (req, res) => {
   const data = JSON.parse(req.body);
 
-  const timezone = data.property_address.timezone;
-  // console.log("Timezone:", timezone);
+  if (data.orderStatus === 'cancelled') {
+    const timezone = data.property_address.timezone;
 
-  const bookingDate = moment.tz(data.date, "dddd, DD MMM, YYYY", timezone);
-  const scheduledTimeStart = moment.tz(data.scheduled_time.split(' - ')[0], ["h:mm A"], timezone);
+    const bookingDate = moment.tz(data.date, "dddd, DD MMM, YYYY", timezone);
+    const scheduledTimeStart = moment.tz(data.scheduled_time.split(' - ')[0], ["h:mm A"], timezone);
 
-  // Merge date and time
-  bookingDate.set({
-    hour: scheduledTimeStart.get('hour'),
-    minute: scheduledTimeStart.get('minute')
-  });
+    // Merge date and time
+    bookingDate.set({
+      hour: scheduledTimeStart.get('hour'),
+      minute: scheduledTimeStart.get('minute')
+    });
 
-  // console.log("bookingDate:", bookingDate);
+    const scheduledStartTime = bookingDate.toDate();
+    console.log("scheduledStartTime:", scheduledStartTime);
 
-  const scheduledStartTime = bookingDate.toDate();
-  console.log("scheduledStartTime:", scheduledStartTime);
+    // Create a date object for current time in the given timezone
+    const currentDateTime = moment.tz(new Date(), timezone).toDate();
+    console.log("currentDateTime:", currentDateTime);
 
-  // Create a date object for current time in the given timezone
-  const currentDateTime = moment.tz(new Date(), timezone).toDate();
-  console.log("currentDateTime:", currentDateTime);
+    // Calculate the difference in hours 
+    const timeDifferenceInHours = (currentDateTime.getTime() - scheduledStartTime.getTime()) / (1000 * 60 * 60);
+    console.log("time Difference:", timeDifferenceInHours);
 
-  // Calculate the difference in hours
-  const timeDifferenceInHours = (scheduledStartTime.getTime() - currentDateTime.getTime()) / (1000 * 60 * 60);
-
-  // Testing output
-  // console.log(`Time difference: ${timeDifferenceInHours}`);
-
-  // If the time difference is less than or equal to 4 hours, trigger the Slack notification
-  if (timeDifferenceInHours <= 4 && data.orderStatus === 'cancelled') {
-    cancelNotifyToSlack("", scheduledStartTime, currentDateTime);
+    if (timeDifferenceInHours <= 4) {
+      cancelNotifyToSlack("", scheduledStartTime, currentDateTime);
+    }
   }
 
   res.send('Data processed!');
