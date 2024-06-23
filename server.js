@@ -22,7 +22,7 @@ const web = new WebClient(token);
 
 app.post('/booking-cancel', (req, res) => {
   const data = JSON.parse(req.body);
-  console.log("**************************:", data);
+  console.log("111111**************************:", data);
 
   if (data.orderStatus === 'cancelled') {
     const orderName = data.orderName;
@@ -56,8 +56,32 @@ app.post('/booking-cancel', (req, res) => {
   res.send('Data processed!');
 });
 
-app.post('/webhook1', (req, res) => {
+app.post('/webhook', (req, res) => {
+  const data = JSON.parse(req.body);
+  console.log("22222**************************:", data);
+  if (data.orderStatus === "pending") {
+    const doNotSendPhotographers = {
+      "Tony Scott": ["JMO", "JMO PROPERTY GROUP", "JMO Property Group Group", "Taleesha", "Taleesha Kelly", "Jennifer Oliver", "Jo Dryden", "Michelle Osmond", "Sam Ware", "Rebekah Ware", "Teza Fruzande", "Tammie Cory Jones", "Naveep Singh", "Belinda Beekman"],
+      "Jocelyn Bong": ["JMO", "JMO PROPERTY GROUP", "JMO Property Group Group", "Taleesha", "Taleesha Kelly", "Jennifer Oliver", "Jo Dryden", "Michelle Osmond", "Peter Florentzos", "Alex Fan", "Nick Yamada", "Mary Chai", "Alan Gu", "Shirley Chow", "Sienna Kim", "Jackson Chow", "Pragya Ojha", "Faraz Peyman", "Ana Wang", "Kosmo Comino", "Sergio Chen", "Hanna Shine", "Rachael Lancaster", "Michael O’Brien", "Jack McKenzie", "Casey Brigland", "Louise Denisenko", "Naveep Singh", "Belinda Beekman"],
+      "Catalina Araya": ["Belinda Beekman", "Naveep Singh"],
+      "Kirk Halstead": ["Nick Yamada", "Mary Chai", "JMO", "JMO PROPERTY GROUP", "JMO Property Group Group", "Taleesha", "Taleesha Kelly", "Jennifer Oliver", "Jo Dryden", "Michelle Osmond", "Belinda Beekman"],
+      "April O’Neil": ["Sharon DesPasquale", "JMO", "JMO PROPERTY GROUP", "JMO Property Group Group", "Taleesha", "Taleesha Kelly", "Jennifer Oliver", "Jo Dryden", "Michelle Osmond", "Gus Yoshida", "Kristy Milford", "Lizzie Basford", "Naveep Singh", "Belinda Beekman"],
+      "Andreja Mitivoik": ["JMO", "JMO PROPERTY GROUP", "JMO Property Group Group", "Taleesha", "Taleesha Kelly", "Jennifer Oliver", "Jo Dryden", "Michelle Osmond", "Belinda Beekman"],
+      "Chi Cantrell": ["JMO", "JMO PROPERTY GROUP", "JMO Property Group Group", "Taleesha", "Taleesha Kelly", "Jennifer Oliver", "Jo Dryden", "Michelle Osmond", "Naveep Singh", "Belinda Beekman"]
+    };
+    for (let photographer of data.photographers) {
+      let photographerName = photographer.name;
 
+      if (doNotSendPhotographers.hasOwnProperty(photographerName)) {
+        if (doNotSendPhotographers[photographerName].includes(data.client_full_name)) {
+          // await webhook.send({
+          //   text: `Photographer ${photographerName} is booked with customer ${data.client_full_name}!`,
+          // });
+          customer2PhotographerNotifyToSlack(data.orderName, data.date, data.scheduled_time, data.client_full_name, photographerName,)
+        }
+      }
+    }
+  }
 });
 
 app.listen(port, () => {
@@ -81,7 +105,39 @@ function cancelNotifyToSlack(photographer = "", orderName, bookingTime, cancella
   const simpleBookingTime = moment(bookingTime).format('MMMM Do, YYYY h:mm A');
   const simpleCancellationTime = moment(cancellationTime).format('MMMM Do, YYYY h:mm A');
 
-  const text = `*Booking Cancelled*\nOrder Nmae: ${orderName} \nPhotographer: ${photographer} \nBooking Time: ${simpleBookingTime} \nCancelled Time: ${simpleCancellationTime}`;
+  const text = `*Booking Cancelled*\nOrder Name: ${orderName} \nPhotographer: ${photographer} \nBooking Time: ${simpleBookingTime} \nCancelled Time: ${simpleCancellationTime}`;
+
+  web.chat
+    .postMessage({
+      channel: channelId,
+      text: text,
+    })
+    .then((res) => {
+      console.log('Message sent: ', res.ts);
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+    });
+}
+
+/**
+ * Send a notification to a Slack channel about a booking.
+ *
+ * @param {string} orderName - The name of the order in question.
+ * @param {string} orderDate - The date the order was made.
+ * @param {string} schedule_time - The time the booking is scheduled for.
+ * @param {string} customer - The customer involved in the transaction.
+ * @param {string} photographer - The photographer involved in the transaction.
+ * @param {string} simpleBookingTime - The simple (detailed) time of the booking.
+ *
+ * The function works by creating a detailed formatted string of the notification data and sending 
+ * this as a chat message to the Slack channel dynamically.
+ * 
+ * If the message is sent successfully, a console log with the message receipt timestamp is shown.
+ * If an error happens during message transmission, the error is caught and logged to the console.
+ */
+function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time, customer, photographer, simpleBookingTime) {
+  const text = `*Booking created*\nOrder name: ${orderName} \nOrder name: ${orderDate}, ${schedule_time} \nCustomer: ${customer} \nPhotographer: ${photographer} \nBooking Time: ${simpleBookingTime}`;
 
   web.chat
     .postMessage({
