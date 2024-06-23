@@ -20,10 +20,12 @@ const web = new WebClient(token);
 
 //--------------------------------------API--------------------------------------------------//
 
-app.post('/webhook', (req, res) => {
+app.post('/booking-cancel', (req, res) => {
   const data = JSON.parse(req.body);
+  console.log("**************************:", data);
 
   if (data.orderStatus === 'cancelled') {
+    const orderName = data.orderName;
     const timezone = data.property_address.timezone;
 
     const bookingDate = moment.tz(data.date, "dddd, DD MMM, YYYY", timezone);
@@ -43,15 +45,19 @@ app.post('/webhook', (req, res) => {
     console.log("currentDateTime:", currentDateTime);
 
     // Calculate the difference in hours 
-    const timeDifferenceInHours = (currentDateTime.getTime() - scheduledStartTime.getTime()) / (1000 * 60 * 60);
+    const timeDifferenceInHours = (scheduledStartTime.getTime() - currentDateTime.getTime()) / (1000 * 60 * 60);
     console.log("time Difference:", timeDifferenceInHours);
 
-    if (timeDifferenceInHours <= 4) {
-      cancelNotifyToSlack("", scheduledStartTime, currentDateTime);
+    if (timeDifferenceInHours <= 4 && timeDifferenceInHours >= 0) {
+      cancelNotifyToSlack("", orderName, scheduledStartTime, currentDateTime);
     }
   }
 
   res.send('Data processed!');
+});
+
+app.post('/webhook1', (req, res) => {
+
 });
 
 app.listen(port, () => {
@@ -67,14 +73,15 @@ app.listen(port, () => {
  * and sends a pre-formatted message to the Slack channel.
  *
  * @param {string} photographer - The name of the photographer.
+ * @param {string} orderName - The name of the oder. "Special Package - Brisbane QLD, Australia - Artem Zakharov",
  * @param {Date} bookingTime - The date and time when the booking was initially made.
  * @param {Date} cancellationTime - The date and time when the booking was cancelled.
  */
-function cancelNotifyToSlack(photographer = "", bookingTime, cancellationTime) {
+function cancelNotifyToSlack(photographer = "", orderName, bookingTime, cancellationTime) {
   const simpleBookingTime = moment(bookingTime).format('MMMM Do, YYYY h:mm A');
   const simpleCancellationTime = moment(cancellationTime).format('MMMM Do, YYYY h:mm A');
 
-  const text = `*Booking Cancelled* \nPhotographer: ${photographer} \nBooking Time: ${simpleBookingTime} \nCancelled Time: ${simpleCancellationTime}`;
+  const text = `*Booking Cancelled*\nOrder Nmae: ${orderName} \nPhotographer: ${photographer} \nBooking Time: ${simpleBookingTime} \nCancelled Time: ${simpleCancellationTime}`;
 
   web.chat
     .postMessage({
