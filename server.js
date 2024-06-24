@@ -104,7 +104,7 @@ function cancelNotifyToSlack(photographer = "", orderName, bookingTime, cancella
   const simpleBookingTime = moment(bookingTime).format('MMMM Do, YYYY h:mm A');
   const simpleCancellationTime = moment(cancellationTime).format('MMMM Do, YYYY h:mm A');
 
-  const text = `*Booking Cancelled*\nOrder Name: ${orderName} \nPhotographer: ${photographer} \nBooking Time: ${simpleBookingTime} \nCancelled Time: ${simpleCancellationTime}`;
+  const text = `*FT PHOTOGRAPHER CANCELLATION*\nOrder Name: ${orderName} \nPhotographer: ${photographer} \nBooking Time: ${simpleBookingTime} \nCancelled Time: ${simpleCancellationTime}`;
 
   web.chat
     .postMessage({
@@ -136,7 +136,7 @@ function cancelNotifyToSlack(photographer = "", orderName, bookingTime, cancella
  * If an error happens during message transmission, the error is caught and logged to the console.
  */
 function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time, customer, photographer,) {
-  const text = `*Booking created*\nOrder name: ${orderName} \nBooking Time: ${orderDate}, ${schedule_time} \nCustomer: ${customer} \nPhotographer: ${photographer}`;
+  const text = `*DO NOT SEND PHOTOGRAPHER*\nOrder name: ${orderName} \nBooking Time: ${orderDate}, ${schedule_time} \nCustomer: ${customer} \nPhotographer: ${photographer}`;
 
   web.chat
     .postMessage({
