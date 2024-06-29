@@ -46,7 +46,7 @@ function cancelNotifyToSlack(photographer = "", orderName, bookingTime, cancella
  * If an error happens during message transmission, the error is caught and logged to the console.
  */
 function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time, customer, photographer,) {
-    const text = `*DO NOT SEND PHOTOGRAPHER*\nOrder name: ${orderName} \nBooking Time: ${orderDate}, ${schedule_time} \nCustomer: ${customer} \nPhotographer: ${photographer}`;
+    const text = `*DO NOT SEND PHOTOGRAPHER*\nOrder name: ${orderName} \nBooking Time: ${orderDate}, ${schedule_time}/Brisbane \nCustomer: ${customer} \nPhotographer: ${photographer}`;
 
     web.chat
         .postMessage({
