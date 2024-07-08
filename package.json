@@ -17,6 +17,7 @@
     "express": "^4.19.2",
     "kml-parser": "^1.0.0",
     "moment-timezone": "^0.5.45",
+    "parse-kml": "^1.0.1",
     "path": "^0.12.7"
   },
   "devDependencies": {
