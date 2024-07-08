@@ -1,13 +1,19 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const parseKML = require('parse-kml');
+const tj = require("@tmcw/togeojson");
+// const kml = require('kml-parser');
+// const parseKML = require('parse-kml');
 const router = express.Router();
 
 const { moment, app } = require('../config');
 const { cancelNotifyToSlack, customer2PhotographerNotifyToSlack } = require('../utils');
 const { doNotSendPhotographers, allowedPhotographers, droneServices } = require('../constant');
-const parseKml = require('parse-kml');
+const DOMParser = require("xmldom").DOMParser;
+const kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Airports.kml', "utf8"));
+const converted = tj.kml(kml);
+
+console.log("****", converted.features[0]);
 
 app.post('/booking-cancel', (req, res) => {
     const data = JSON.parse(req.body);
@@ -67,45 +73,7 @@ app.post('/webhook', (req, res) => {
 
     if (isDroneServiceIncluded || isDroneServiceIncludedInAlaCart) {
         console.log("One of the Drone Services is involved either in services or services_a_la_cart");
-        parseKml.readKml(__dirname + '../../../Airports.kml')
-            .then((data) => {
-                console.log('***', data);
-                // Function to check if a point is within a polygon
-                function isPointInPolygon(point, polygon) {
-                    let inside = false;
-                    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-                        const xi = polygon[i][0], yi = polygon[i][1];
-                        const xj = polygon[j][0], yj = polygon[j][1];
 
-                        const intersect = ((yi > point[1]) !== (yj > point[1])) &&
-                            (point[0] < (xj - xi) * (point[1] - yi) / (yj - yi) + xi);
-                        if (intersect) inside = !inside;
-                    }
-                    return inside;
-                }
-
-                // Traverse the KML data and find the geo_shapes and sub-geo_shapes
-                function findGeoShapes(folder) {
-                    for (const item of folder.Folder || folder.Placemark || []) {
-                        if (item.Folder) {
-                            findGeoShapes(item);
-                        } else if (item.Polygon) {
-                            const coordinates = item.Polygon.outerBoundaryIs.LinearRing.coordinates.map(coord => coord.split(',').map(parseFloat));
-                            if (isPointInPolygon([propertyAddress.lng, propertyAddress.lat], coordinates)) {
-                                console.log(`Property is within the geo_shape: ${item.name}`);
-
-                                // Check for sub-geo_shapes
-                                if (folder.Folder) {
-                                    console.log('Sub-geo_shapes:');
-                                    findGeoShapes(folder);
-                                }
-                            }
-                        }
-                    }
-                }
-                findGeoShapes(data)
-            })
-            .catch(console.log)
 
     } else {
         console.log("None of the Drone Services are involved in services or services_a_la_cart");
