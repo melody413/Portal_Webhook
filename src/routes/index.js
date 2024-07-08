@@ -1,8 +1,10 @@
 const express = require('express');
+const path = require('path');
+const fs = require('fs');
 const router = express.Router();
 const { moment, app } = require('../config');
 const { cancelNotifyToSlack, customer2PhotographerNotifyToSlack } = require('../utils');
-const { doNotSendPhotographers, allowedPhotographers } = require('../constant');
+const { doNotSendPhotographers, allowedPhotographers, droneServices } = require('../constant');
 
 app.post('/booking-cancel', (req, res) => {
     const data = JSON.parse(req.body);
@@ -47,6 +49,27 @@ app.post('/booking-cancel', (req, res) => {
 
 app.post('/webhook', (req, res) => {
     const data = JSON.parse(req.body);
+    console.log("****", data);
+
+    const services = data.services;
+    const services_a_la_cart = data.services_a_la_cart;
+    const property_address = data.property_address;
+
+    console.log("****Services:", services);
+    console.log("****Services a la cart:", services_a_la_cart);
+    console.log("****property_address:", property_address);
+
+    const isDroneServiceIncluded = services.some(service => droneServices.includes(service));
+    const isDroneServiceIncludedInAlaCart = services_a_la_cart.some(service => droneServices.includes(service));
+
+    if (isDroneServiceIncluded || isDroneServiceIncludedInAlaCart) {
+        console.log("One of the Drone Services is involved either in services or services_a_la_cart");
+        const kmlData = fs.readFileSync('airports.kml', 'utf8');
+
+
+    } else {
+        console.log("None of the Drone Services are involved in services or services_a_la_cart");
+    }
 
     if (data.orderStatus === "pending") {
         for (let photographer of data.photographers) {

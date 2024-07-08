@@ -14,4 +14,10 @@ const allowedPhotographers = [
     'marcelo.thepicketfence@gmail.com'
 ];
 
-module.exports = { doNotSendPhotographers, allowedPhotographers };
+const droneServices = [
+    'Aerial Photography',
+    'Videography',
+    'Panoramic Drone'
+];
+
+module.exports = { doNotSendPhotographers, allowedPhotographers, droneServices };
