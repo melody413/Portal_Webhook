@@ -2,18 +2,17 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const tj = require("@tmcw/togeojson");
-// const kml = require('kml-parser');
-// const parseKML = require('parse-kml');
+const turf = require('@turf/turf');
 const router = express.Router();
 
 const { moment, app } = require('../config');
-const { cancelNotifyToSlack, customer2PhotographerNotifyToSlack } = require('../utils');
+const { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly } = require('../utils');
 const { doNotSendPhotographers, allowedPhotographers, droneServices } = require('../constant');
 const DOMParser = require("xmldom").DOMParser;
 const kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Airports.kml', "utf8"));
 const converted = tj.kml(kml);
 
-console.log("****", converted.features[0]);
+// console.log("****", converted.features[0].geometry.coordinates);
 
 app.post('/booking-cancel', (req, res) => {
     const data = JSON.parse(req.body);
@@ -58,23 +57,31 @@ app.post('/booking-cancel', (req, res) => {
 
 app.post('/webhook', (req, res) => {
     const data = JSON.parse(req.body);
-    console.log("****", data);
 
     const services = data.services;
     const services_a_la_cart = data.services_a_la_cart;
     const property_address = data.property_address;
 
-    console.log("****Services:", services);
-    console.log("****Services a la cart:", services_a_la_cart);
-    console.log("****property_address:", property_address);
-
     const isDroneServiceIncluded = services.some(service => droneServices.includes(service));
     const isDroneServiceIncludedInAlaCart = services_a_la_cart.some(service => droneServices.includes(service));
 
     if (isDroneServiceIncluded || isDroneServiceIncludedInAlaCart) {
-        console.log("One of the Drone Services is involved either in services or services_a_la_cart");
+        // console.log("One of the Drone Services is involved either in services or services_a_la_cart");
+        var pt = { x: property_address.lng, y: property_address.lat };
 
+        let placeMarkNames = [];
 
+        for (var i = 0; i < converted.features.length; i++) {
+            feature = converted.features[i];
+            poly = feature.geometry.coordinates[0];
+
+            if (isPointInPoly(poly, pt)) {
+                console.log("The given point is in the polygon : ", feature.properties.name);
+                placeMarkNames.push(feature.properties.name);
+            }
+        }
+
+        console.log('***Result:', placeMarkNames);
     } else {
         console.log("None of the Drone Services are involved in services or services_a_la_cart");
     }

@@ -20,4 +20,7 @@ const droneServices = [
     'Panoramic Drone'
 ];
 
+const geoShape = {
+    "Mini drone": ["Mini Drone 1", "Mini Drone 2",]
+}
 module.exports = { doNotSendPhotographers, allowedPhotographers, droneServices };

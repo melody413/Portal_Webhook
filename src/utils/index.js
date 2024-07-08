@@ -1,5 +1,6 @@
 
 const { web, moment, channelId } = require('../config');
+const turf = require('@turf/turf');
 
 /**
  * This function is responsible for sending a cancellation alert to a Slack channel.
@@ -61,4 +62,12 @@ function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time,
         });
 }
 
-module.exports = { cancelNotifyToSlack, customer2PhotographerNotifyToSlack };
+function isPointInPoly(poly, pt) {
+    const geoPoint = turf.point([pt.x, pt.y]);
+    let newCoordinates = poly.map(coordinate => [coordinate[0], coordinate[1]]);
+    const geoPolygon = turf.polygon([newCoordinates]);
+    const isPointInPolygon = turf.booleanPointInPolygon(geoPoint, geoPolygon);
+    return isPointInPolygon;
+}
+
+module.exports = { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly };
