@@ -70,27 +70,34 @@ function isPointInPoly(poly, pt) {
     return isPointInPolygon;
 }
 
-
+/**
+ * This function is used to send different notification messages to a Slack channel 
+ * depending on the 'type' of drone booking.
+ *
+ * @param {number} type - The type of the drone booking which determines the message to be sent. It can be from 1 to 8.
+ * @param {string} address - The address of the drone booking.
+ * @param {string} date - The date of the drone booking.
+ */
 function droneNotifySlack(type, address, date) {
     let text = '';
 
     if (type == 1) {
-        text = `*DRONE BOOKING*\nDrone booking ${address} on ${date} cannot be done. Please inform customer and remove item from booking`;
+        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}* cannot be done. Please inform customer and remove item from booking`;
     } else if (type == 2) {
-        text = `*DRONE BOOKING*\nDrone booking ${address} on ${date} must be done after 5pm (with any drone)`;
+        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}* must be done after 5pm (with any drone)`;
     } else if (type == 3) {
-        text = `*DRONE BOOKING*\nDrone booking ${address} on ${date} has been made at Gold Coast airport. Drone must be done before 6:00am otherwise inform customer it cannot be
+        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}* has been made at Gold Coast airport. Drone must be done before 6:00am otherwise inform customer it cannot be
 done and remove from booking. Unlocking licence required`;
     } else if (type == 4) {
-        text = `*DRONE BOOKING*\nDrone booking ${address} on ${date} must be done with mini drone (anytime of day)`;
+        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}* must be done with mini drone (anytime of day)`;
     } else if (type == 5) {
-        text = `*DRONE BOOKING*\nDrone booking ${address} on ${date}. This can be done with mini drone with unlocking licence (anytime of day)`;
+        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}*. This can be done with mini drone with unlocking licence (anytime of day)`;
     } else if (type == 6) {
-        text = `*DRONE BOOKING*\nDrone booking ${address} on ${date} cannot be done. Please inform customer and remove item from booking`;
+        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}* cannot be done. Please inform customer and remove item from booking`;
     } else if (type == 7) {
-        text = `*DRONE BOOKING*\nDrone booking ${address} on ${date} must be done after 5pm with mini drone and unlocking licence`;
+        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}* must be done after 5pm with mini drone and unlocking licence`;
     } else if (type == 8) {
-        text = `*DRONE BOOKING*\nDrone booking ${address} on ${date} has been made at Gold Coast airport. Drone must be done before 6:00am otherwise inform customer it cannot be
+        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}* has been made at Gold Coast airport. Drone must be done before 6:00am otherwise inform customer it cannot be
 done and remove from booking. Unlocking licence required`;
     }
 
@@ -106,4 +113,5 @@ done and remove from booking. Unlocking licence required`;
             console.error('Error:', error);
         });
 }
+
 module.exports = { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack };

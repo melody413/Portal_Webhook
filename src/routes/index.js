@@ -100,7 +100,6 @@ app.post('/webhook', (req, res) => {
             } else if (folders.length == 1 && folders[0] == 'Mini drone') {
                 droneNotifySlack(4, data.orderName, data.date + ", " + data.scheduled_time)
             } else if (folders.length >= 2 && folders.includes('Unlocking Licence') && folders.includes('Mini drone')) {
-                console.log('***HEre');
                 droneNotifySlack(5, data.orderName, data.date + ", " + data.scheduled_time)
             } else if (folders.length >= 2 && folders.includes('Unlocking Licence') && folders.includes('Splays Never')) {
                 droneNotifySlack(6, data.orderName, data.date + ", " + data.scheduled_time)
