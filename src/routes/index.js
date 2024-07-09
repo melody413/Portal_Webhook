@@ -6,8 +6,8 @@ const turf = require('@turf/turf');
 const router = express.Router();
 
 const { moment, app } = require('../config');
-const { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly } = require('../utils');
-const { doNotSendPhotographers, allowedPhotographers, droneServices } = require('../constant');
+const { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack } = require('../utils');
+const { doNotSendPhotographers, allowedPhotographers, droneServices, geoShape } = require('../constant');
 const DOMParser = require("xmldom").DOMParser;
 const kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Airports.kml', "utf8"));
 const converted = tj.kml(kml);
@@ -82,6 +82,35 @@ app.post('/webhook', (req, res) => {
         }
 
         console.log('***Result:', placeMarkNames);
+        const folders = [];
+
+        for (let key in geoShape) {
+            if (geoShape[key].some(name => placeMarkNames.includes(name)))
+                folders.push(key);
+        }
+
+        console.log("****", folders)
+        if (folders.length >= 1) {
+            if (folders.length == 1 && folders[0] == 'Splays Never') {
+                droneNotifySlack(1, data.orderName, data.date + ", " + data.scheduled_time)
+            } else if (folders.length == 1 && folders[0] == 'Splays After 5pm') {
+                droneNotifySlack(2, data.orderName, data.date + "," + data.scheduled_time)
+            } else if (folders.length == 1 && folders[0] == 'Splay before 6:00am') {
+                droneNotifySlack(3, data.orderName, data.date + ", " + data.scheduled_time)
+            } else if (folders.length == 1 && folders[0] == 'Mini drone') {
+                droneNotifySlack(4, data.orderName, data.date + ", " + data.scheduled_time)
+            } else if (folders.length >= 2 && folders.includes('Unlocking Licence') && folders.includes('Mini drone')) {
+                console.log('***HEre');
+                droneNotifySlack(5, data.orderName, data.date + ", " + data.scheduled_time)
+            } else if (folders.length >= 2 && folders.includes('Unlocking Licence') && folders.includes('Splays Never')) {
+                droneNotifySlack(6, data.orderName, data.date + ", " + data.scheduled_time)
+            } else if (folders.length >= 2 && folders.includes('Unlocking Licence') && folders.includes('Splays After 5pm')) {
+                droneNotifySlack(7, data.orderName, data.date + ", " + data.scheduled_time)
+            } else if (folders.length >= 2 && folders.includes('Unlocking Licence') && folders.includes('Splay before 6:00am')) {
+                droneNotifySlack(8, data.orderName, data.date + ", " + data.scheduled_time)
+            }
+        }
+
     } else {
         console.log("None of the Drone Services are involved in services or services_a_la_cart");
     }

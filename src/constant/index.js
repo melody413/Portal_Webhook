@@ -21,6 +21,11 @@ const droneServices = [
 ];
 
 const geoShape = {
-    "Mini drone": ["Mini Drone 1", "Mini Drone 2",]
-}
-module.exports = { doNotSendPhotographers, allowedPhotographers, droneServices };
+    "Mini drone": ["Mini Drone 1", "Mini Drone 2", "Mini Drone 3", "Mini Drone 4", "Mini Drone 5", "Mini Drone 6", "Mini Drone 7", "Mini Drone 8", "Mini Drone 9", "Mini Drone 9"],
+    "Splays Never": ["Splay 4", "Splay 3", "Splay 5", "Splay 1"],
+    "Splays After 5pm": ["Splay 8", "Splay 10", "Splay 11", "Splay 9"],
+    "Splay before 6:00am": ["Splay 7", "Splay 2", "Splay 6"],
+    "Unlocking Licence": ["Unlocking Licence 1", "Unlocking Licence 2", "Unlocking Licence 3", "Unlocking Licence 4"]
+};
+
+module.exports = { doNotSendPhotographers, allowedPhotographers, droneServices, geoShape };
