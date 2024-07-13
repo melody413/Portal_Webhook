@@ -99,6 +99,8 @@ done and remove from booking. Unlocking licence required`;
     } else if (type == 8) {
         text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}/Brisbane* has been made at Gold Coast airport. Drone must be done before 6:00am otherwise inform customer it cannot be
 done and remove from booking. Unlocking licence required`;
+    } else if (type == 9) {
+        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}/Brisbane* is near Amberley. Please check details, an unlocking licence may be required`;
     }
 
     web.chat

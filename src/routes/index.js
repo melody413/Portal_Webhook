@@ -107,6 +107,8 @@ app.post('/webhook', (req, res) => {
                 droneNotifySlack(7, data.orderName, data.date + ", " + data.scheduled_time)
             } else if (folders.length >= 2 && folders.includes('Unlocking Licence') && folders.includes('Splay before 6:00am')) {
                 droneNotifySlack(8, data.orderName, data.date + ", " + data.scheduled_time)
+            } else if (folders.length == 1 && folders[0] == 'Splays Never1') {
+                droneNotifySlack(9, data.orderName, data.date + ", " + data.scheduled_time)
             }
         }
 
