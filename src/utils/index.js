@@ -141,26 +141,26 @@ function sendTextMessage(phoneNumber) {
 
 function sendMessage(phoneNumber) {
     console.log('*** SendMessage function');
-    const options = {
-        method: 'POST',
-        headers: { accept: 'application/json', 'content-type': 'application/json' },
-        body: JSON.stringify({
-            channel_hashtag: 'string',
-            from_number: 'string',
-            infer_country_code: false,
-            media: 'string',
-            sender_group_id: 0,
-            sender_group_type: 'callcenter',
-            text: `Regarding your recent booking with The Picket Fence; on a scale of 0 to 10(where 0 is "extremely unlikely" and 10 is "extremely likely') based on this photoshoot, how likely are you to recommend The Picket Fence to co-workers and other agents?`,
-            to_numbers: [phoneNumber],
-            user_id: 0
-        })
-    };
+    // const options = {
+    //     method: 'POST',
+    //     headers: { accept: 'application/json', 'content-type': 'application/json' },
+    //     body: JSON.stringify({
+    //         channel_hashtag: 'string',
+    //         from_number: 'string',
+    //         infer_country_code: false,
+    //         media: 'string',
+    //         sender_group_id: 0,
+    //         sender_group_type: 'callcenter',
+    //         text: `Regarding your recent booking with The Picket Fence; on a scale of 0 to 10(where 0 is "extremely unlikely" and 10 is "extremely likely') based on this photoshoot, how likely are you to recommend The Picket Fence to co-workers and other agents?`,
+    //         to_numbers: [phoneNumber],
+    //         user_id: 0
+    //     })
+    // };
 
-    fetch('https://dialpad.com/api/v2/sms', options)
-        .then(response => response.json())
-        .then(response => console.log(response))
-        .catch(err => console.error(err));
+    // fetch('https://dialpad.com/api/v2/sms', options)
+    //     .then(response => response.json())
+    //     .then(response => console.log(response))
+    //     .catch(err => console.error(err));
 }
 
 module.exports = { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack, sendTextMessage };

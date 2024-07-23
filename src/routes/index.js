@@ -4,6 +4,7 @@ const fs = require('fs');
 const tj = require("@tmcw/togeojson");
 const turf = require('@turf/turf');
 const router = express.Router();
+const cron = require('node-cron');
 
 const { moment, app } = require('../config');
 const { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack, sendTextMessage } = require('../utils');
@@ -53,7 +54,7 @@ app.post('/booking-change', (req, res) => {
         console.log('***phoneNumber', phoneNumber);
 
         //read the file with previous sent messages
-        fs.readFile('message.json', (err, data) => {
+        fs.readFile('messages.json', (err, data) => {
             if (err) throw err;
 
             let messages = JSON.parse(data);
@@ -62,7 +63,7 @@ app.post('/booking-change', (req, res) => {
             let foundMessage = messages.find(message => {
                 return message.phoneNumber === phoneNumber && moment().diff(moment(message.date), 'days') <= 180
             });
-
+            console.log('*** FoundMessage', foundMessage);
             if (!foundMessage) {
                 //If message not found, send a text message
                 let message = {
@@ -78,7 +79,7 @@ app.post('/booking-change', (req, res) => {
                 });
 
                 cron.schedule('0 */4 * * *', () => {
-                    sendTextMessage(phoneNumber);
+                    console.log('***This is a cron after 4 hoursa');
                 });
             }
         });
