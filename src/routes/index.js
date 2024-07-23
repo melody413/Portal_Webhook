@@ -6,15 +6,13 @@ const turf = require('@turf/turf');
 const router = express.Router();
 
 const { moment, app } = require('../config');
-const { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack } = require('../utils');
+const { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack, sendTextMessage } = require('../utils');
 const { doNotSendPhotographers, allowedPhotographers, droneServices, geoShape } = require('../constant');
 const DOMParser = require("xmldom").DOMParser;
 const kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Airports.kml', "utf8"));
 const converted = tj.kml(kml);
 
-// console.log("****", converted.features[0].geometry.coordinates);
-
-app.post('/booking-cancel', (req, res) => {
+app.post('/booking-change', (req, res) => {
     const data = JSON.parse(req.body);
 
     if (data.orderStatus === 'cancelled') {
@@ -50,6 +48,40 @@ app.post('/booking-cancel', (req, res) => {
         if (timeDifferenceInHours <= 4 && timeDifferenceInHours >= 0 && isAllowNotify) {
             cancelNotifyToSlack(photographers[0].name, orderName, scheduledStartTime, currentDateTime);
         }
+    } else if (data.orderStatus === 'complete') {
+        const phoneNumber = data.phone_number;
+        console.log('***phoneNumber', phoneNumber);
+
+        //read the file with previous sent messages
+        fs.readFile('message.json', (err, data) => {
+            if (err) throw err;
+
+            let messages = JSON.parse(data);
+            console.log('***messages', messages);
+            //Find if a message has already been sent within 180 days
+            let foundMessage = messages.find(message => {
+                return message.phoneNumber === phoneNumber && moment().diff(moment(message.date), 'days') <= 180
+            });
+
+            if (!foundMessage) {
+                //If message not found, send a text message
+                let message = {
+                    phoneNumber: phoneNumber,
+                    date: moment().format()
+                };
+                //Add to messages array
+                messages.push(message);
+
+                // Update the messages file
+                fs.writeFile('messages.json', JSON.stringify(messages), err => {
+                    if (err) throw err;
+                });
+
+                cron.schedule('0 */4 * * *', () => {
+                    sendTextMessage(phoneNumber);
+                });
+            }
+        });
     }
 
     res.send('Data processed!');

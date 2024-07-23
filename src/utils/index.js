@@ -1,6 +1,8 @@
 
 const { web, moment, channelId } = require('../config');
 const turf = require('@turf/turf');
+const fs = require('fs');
+const cron = require('node-cron');
 
 /**
  * This function is responsible for sending a cancellation alert to a Slack channel.
@@ -116,4 +118,27 @@ done and remove from booking. Unlocking licence required`;
         });
 }
 
-module.exports = { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack };
+function sendTextMessage(phoneNumber) {
+    console.log('*** SendTextMessage Function');
+    let currentTime = moment().tz("Australia/Brisbane");
+    let start = currentTime.clone().hour(10).minute(0);
+    let end = currentTime.clone().hour(18).minute(30);
+
+    if (currentTime.isBetween(start, end)) {
+        sendMessage(phoneNumber);
+    } else {
+        let nextStart = start.add(1, 'day');
+        let waitTime = nextStart.diff(currentTime, 'minutes');
+
+        //Scheduling the task for the next day within the time range
+        cron.schedule(`*/${waitTime} * * *`, () => {
+            sendMessage(phoneNumber);
+        });
+    }
+}
+
+function sendMessage(phoneNumber) {
+
+}
+
+module.exports = { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack, sendTextMessage };
