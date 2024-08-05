@@ -103,6 +103,8 @@ done and remove from booking. Unlocking licence required`;
 done and remove from booking. Unlocking licence required`;
     } else if (type == 9) {
         text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}/Brisbane* is near Amberley. Please check details, an unlocking licence may be required`;
+    } else if (type == 10) {
+        text = `*COMMERCIAL BOOKING*\nCommercial Booking *${address}* on *${date}/Brisbane*\nCheck, call agent about the job and move onto a FT photographer`;
     }
 
     web.chat

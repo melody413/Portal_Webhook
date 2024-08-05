@@ -12,6 +12,8 @@ const { doNotSendPhotographers, allowedPhotographers, droneServices, geoShape } 
 const DOMParser = require("xmldom").DOMParser;
 const kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Airports.kml', "utf8"));
 const converted = tj.kml(kml);
+const commerical_kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Commercial.kml', "utf8"));
+const converted_commerical = tj.kml(commerical_kml);
 
 app.post('/booking-change', (req, res) => {
     const data = JSON.parse(req.body);
@@ -58,7 +60,6 @@ app.post('/booking-change', (req, res) => {
             if (err) throw err;
 
             let messages = JSON.parse(data);
-            console.log('***messages', messages);
             //Find if a message has already been sent within 180 days
             let foundMessage = messages.find(message => {
                 return message.phoneNumber === phoneNumber && moment().diff(moment(message.date), 'days') <= 180
@@ -142,6 +143,16 @@ app.post('/webhook', (req, res) => {
                 droneNotifySlack(8, data.orderName, data.date + ", " + data.scheduled_time)
             } else if (folders.length == 1 && folders[0] == 'Splays Never1') {
                 droneNotifySlack(9, data.orderName, data.date + ", " + data.scheduled_time)
+            }
+        }
+
+        for (var i = 0; i < converted_commerical.features.length; i++) {
+            feature = converted_commerical.features[i];
+            poly = feature.geometry.coordinates[0];
+
+            if (isPointInPoly(poly, pt)) {
+                console.log("The given point is in the commercial Point : ", feature.properties.name);
+                droneNotifySlack(10, data.dorderName, data.date + ", " + data.scheduled_time)
             }
         }
 
