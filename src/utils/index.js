@@ -51,7 +51,7 @@ function cancelNotifyToSlack(photographer = "", orderName, bookingTime, cancella
                         create_item (
                             board_id: 7012463051,
                             group_id: "group_title",
-                            item_name: ${orderName},
+                            item_name: "${orderName}",
                             column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
                         ) {
                         id
@@ -117,7 +117,7 @@ function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time,
                         create_item (
                             board_id: 7012463051,
                             group_id: "group_title",
-                            item_name: ${orderName},
+                            item_name: "${orderName}",
                             column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
                         ) {
                         id
@@ -143,7 +143,7 @@ function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time,
                             create_item (
                                 board_id: 7012463051,
                                 group_id: "new_group__1",
-                                item_name: ${orderName},
+                                item_name:"${orderName}",
                                 column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
                             ) {
                             id
@@ -246,7 +246,7 @@ done and remove from booking. Unlocking licence required`;
                         create_item (
                             board_id: 7012463051,
                             group_id: "group_title",
-                            item_name: ${address},
+                            item_name: "${address}",
                             column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
                         ) {
                         id
@@ -277,7 +277,7 @@ done and remove from booking. Unlocking licence required`;
                             create_item (
                                 board_id: 7012463051,
                                 group_id: "new_group__1",
-                                item_name: ${address},
+                                item_name: "${address}"
                                 column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
                             ) {
                             id
@@ -290,19 +290,26 @@ done and remove from booking. Unlocking licence required`;
     }
 }
 
-function createMondayTickeet(query) {
-    fetch("https://api.monday.com/v2", {
-        method: 'post',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': process.env.MONDAY_API_KEY
-        },
-        body: JSON.stringify({
-            query: query
-        })
-    })
-        .then(res => console.log('-----------------------------Moanday Success:', res.json()))
-        .then(res => console.log('-----------------------------Moanday Fail:', JSON.stringify(res, null, 2)));
+async function createMondayTickeet(query) {
+    console.log('-----------------------', process.env.MONDAY_API_KEY);
+
+    try {
+        const response = await fetch("https://api.monday.com/v2", {
+            method: 'post',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': process.env.MONDAY_API_KEY
+            },
+            body: JSON.stringify({
+                'query': query
+            })
+        });
+
+        const responseData = await response.json();
+        console.log('-----------------------------Monday Success:', responseData);
+    } catch (error) {
+        console.log('--------------------------Monday Error', error);
+    }
 }
 
 function sendTextMessage(phoneNumber) {

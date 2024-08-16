@@ -22,7 +22,6 @@ app.post('/booking-change', (req, res) => {
         const photographers = data.photographers;
         const orderName = data.orderName;
         const timezone = data.property_address.timezone;
-        // const agentName = data.listingAgents[0].displayName;
 
         const bookingDate = moment.tz(data.date, "dddd, DD MMM, YYYY", timezone);
         const scheduledTimeStart = moment.tz(data.scheduled_time.split(' - ')[0], ["h:mm A"], timezone);
@@ -50,7 +49,7 @@ app.post('/booking-change', (req, res) => {
         );
 
         if (timeDifferenceInHours <= 4 && timeDifferenceInHours >= 0 && isAllowNotify) {
-            cancelNotifyToSlack(photographers[0].name, orderName + '-' + agentName, scheduledStartTime, currentDateTime);
+            cancelNotifyToSlack(photographers[0].name, orderName, scheduledStartTime, currentDateTime);
         }
     } else if (data.orderStatus === 'complete') {
         const phoneNumber = data.phone_number;
