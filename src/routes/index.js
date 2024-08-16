@@ -22,6 +22,7 @@ app.post('/booking-change', (req, res) => {
         const photographers = data.photographers;
         const orderName = data.orderName;
         const timezone = data.property_address.timezone;
+        // const agentName = data.listingAgents[0].displayName;
 
         const bookingDate = moment.tz(data.date, "dddd, DD MMM, YYYY", timezone);
         const scheduledTimeStart = moment.tz(data.scheduled_time.split(' - ')[0], ["h:mm A"], timezone);
@@ -49,7 +50,7 @@ app.post('/booking-change', (req, res) => {
         );
 
         if (timeDifferenceInHours <= 4 && timeDifferenceInHours >= 0 && isAllowNotify) {
-            cancelNotifyToSlack(photographers[0].name, orderName, scheduledStartTime, currentDateTime);
+            cancelNotifyToSlack(photographers[0].name, orderName + '-' + agentName, scheduledStartTime, currentDateTime);
         }
     } else if (data.orderStatus === 'complete') {
         const phoneNumber = data.phone_number;
@@ -95,7 +96,7 @@ app.post('/webhook', (req, res) => {
     const services = data.services;
     const services_a_la_cart = data.services_a_la_cart;
     const property_address = data.property_address;
-
+    // const agentName = data.listingAgents[0].displayName;
     const isDroneServiceIncluded = services.some(service => droneServices.includes(service));
     const isDroneServiceIncludedInAlaCart = services_a_la_cart.some(service => droneServices.includes(service));
 
@@ -126,23 +127,23 @@ app.post('/webhook', (req, res) => {
         console.log("****", folders)
         if (folders.length >= 1) {
             if (folders.length == 1 && folders[0] == 'Splays Never') {
-                droneNotifySlack(1, data.orderName, data.date + ", " + data.scheduled_time)
+                droneNotifySlack(1, data.orderName, data.date, data.scheduled_time, data.property_address.timezone)
             } else if (folders.length == 1 && folders[0] == 'Splays After 5pm') {
-                droneNotifySlack(2, data.orderName, data.date + "," + data.scheduled_time)
+                droneNotifySlack(2, data.orderName, data.date, data.scheduled_time, data.property_address.timezone)
             } else if (folders.length == 1 && folders[0] == 'Splay before 6:00am') {
-                droneNotifySlack(3, data.orderName, data.date + ", " + data.scheduled_time)
+                droneNotifySlack(3, data.orderName, data.date, data.scheduled_time, data.property_address.timezone)
             } else if (folders.length == 1 && folders[0] == 'Mini drone') {
-                droneNotifySlack(4, data.orderName, data.date + ", " + data.scheduled_time)
+                droneNotifySlack(4, data.orderName, data.date, data.scheduled_time, data.property_address.timezone)
             } else if (folders.length >= 2 && folders.includes('Unlocking Licence') && folders.includes('Mini drone')) {
-                droneNotifySlack(5, data.orderName, data.date + ", " + data.scheduled_time)
+                droneNotifySlack(5, data.orderName, data.date, data.scheduled_time, data.property_address.timezone)
             } else if (folders.length >= 2 && folders.includes('Unlocking Licence') && folders.includes('Splays Never')) {
-                droneNotifySlack(6, data.orderName, data.date + ", " + data.scheduled_time)
+                droneNotifySlack(6, data.orderName, data.date, data.scheduled_time, data.property_address.timezone)
             } else if (folders.length >= 2 && folders.includes('Unlocking Licence') && folders.includes('Splays After 5pm')) {
-                droneNotifySlack(7, data.orderName, data.date + ", " + data.scheduled_time)
+                droneNotifySlack(7, data.orderName, data.date, data.scheduled_time, data.property_address.timezone)
             } else if (folders.length >= 2 && folders.includes('Unlocking Licence') && folders.includes('Splay before 6:00am')) {
-                droneNotifySlack(8, data.orderName, data.date + ", " + data.scheduled_time)
+                droneNotifySlack(8, data.orderName, data.date, data.scheduled_time, data.property_address.timezone)
             } else if (folders.length == 1 && folders[0] == 'Splays Never1') {
-                droneNotifySlack(9, data.orderName, data.date + ", " + data.scheduled_time)
+                droneNotifySlack(9, data.orderName, data.date, data.scheduled_time, data.property_address.timezone)
             }
         }
 
@@ -152,7 +153,7 @@ app.post('/webhook', (req, res) => {
 
             if (isPointInPoly(poly, pt)) {
                 console.log("The given point is in the commercial Point : ", feature.properties.name);
-                droneNotifySlack(10, data.dorderName, data.date + ", " + data.scheduled_time)
+                droneNotifySlack(10, data.dorderName + '-' + data.agentName, data.date + ", " + data.scheduled_time)
             }
         }
 
@@ -166,7 +167,7 @@ app.post('/webhook', (req, res) => {
 
             if (doNotSendPhotographers.hasOwnProperty(photographerName)) {
                 if (doNotSendPhotographers[photographerName].includes(data.client_full_name)) {
-                    customer2PhotographerNotifyToSlack(data.orderName, data.date, data.scheduled_time, data.client_full_name, photographerName,)
+                    customer2PhotographerNotifyToSlack(data.orderName, data.date, data.scheduled_time, data.client_full_name, photographerName, data.property_address.timezone)
                 }
             }
         }

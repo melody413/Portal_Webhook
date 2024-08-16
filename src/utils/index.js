@@ -32,6 +32,33 @@ function cancelNotifyToSlack(photographer = "", orderName, bookingTime, cancella
         .catch((error) => {
             console.error('Error:', error);
         });
+
+    const formattedDate = simpleBookingTime.format('YYYY-MM-DD');
+    const formattedTime = simpleBookingTime.format('HH:mm');
+    console.log('---------------------------Cancel', formattedDate, formattedTime);
+
+    const itemColumnValues = {
+        "status_1__1": "ADMIN",
+        "status": 'FT CANCELLATION',
+        "date_10__1": formattedDate,
+        "hour4__1": {
+            "hour": parseInt(formattedTime.split(':')[0]),
+            "minute": parseInt(formattedTime.split(':')[1])
+        }
+    };
+    const query = `
+                    mutation {
+                        create_item (
+                            board_id: 7012463051,
+                            group_id: "group_title",
+                            item_name: ${orderName},
+                            column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
+                        ) {
+                        id
+                        }
+                    }
+                    `;
+    createMondayTickeet(query);
 }
 
 /**
@@ -48,7 +75,7 @@ function cancelNotifyToSlack(photographer = "", orderName, bookingTime, cancella
  * If the message is sent successfully, a console log with the message receipt timestamp is shown.
  * If an error happens during message transmission, the error is caught and logged to the console.
  */
-function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time, customer, photographer,) {
+function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time, customer, photographer, timezone) {
     const text = `*DO NOT SEND PHOTOGRAPHER*\nOrder name: ${orderName} \nBooking Time: ${orderDate}, ${schedule_time}/Brisbane \nCustomer: ${customer} \nPhotographer: ${photographer}`;
 
     web.chat
@@ -62,6 +89,71 @@ function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time,
         .catch((error) => {
             console.error('Error:', error);
         });
+
+    //Monday Ticekt 
+    const today = moment();
+    const bookingDate = moment.tz(orderDate, "dddd, DD MMM, YYYY", timezone);
+    const scheduledTimeStart = moment.tz(schedule_time.split(' - ')[0], ["h:mm A"], timezone);
+    const formattedDate = bookingDate.format('YYYY-MM-DD');
+    const formattedTime = scheduledTimeStart.format('HH:mm');
+    let flag = false;
+
+    if (bookingDate.isSame(today, 'day')) {
+        console.log('-------------------------------------------FT Same Day: True');
+        const hoursDifference = scheduledTimeStart.diff(today, 'hours');
+        if (Math.abs(hoursDifference) <= 2) {
+            console.log('-------------------------------------------FT Same Day: True');
+            const itemColumnValues = {
+                "status_1__1": "ADMIN",
+                "status": 'DONT SEND PHOTOGRAPHER',
+                "date_10__1": formattedDate,
+                "hour4__1": {
+                    "hour": parseInt(formattedTime.split(':')[0]),
+                    "minute": parseInt(formattedTime.split(':')[1])
+                }
+            };
+            const query = `
+                    mutation {
+                        create_item (
+                            board_id: 7012463051,
+                            group_id: "group_title",
+                            item_name: ${orderName},
+                            column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
+                        ) {
+                        id
+                        }
+                    }
+                    `;
+            createMondayTickeet(query);
+            flag = true;
+        }
+    }
+    if (flag === false) {
+        const itemColumnValues = {
+            "status_1__1": "ADMIN",
+            "status": 'DONT SEND PHOTOGRAPHER',
+            "date_10__1": formattedDate,
+            "hour4__1": {
+                "hour": parseInt(formattedTime.split(':')[0]),
+                "minute": parseInt(formattedTime.split(':')[1])
+            }
+        };
+        const query = `
+                        mutation {
+                            create_item (
+                                board_id: 7012463051,
+                                group_id: "new_group__1",
+                                item_name: ${orderName},
+                                column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
+                            ) {
+                            id
+                            }
+                        }
+                        `;
+        createMondayTickeet(query);
+    } else {
+        flag = false;
+    }
 }
 
 function isPointInPoly(poly, pt) {
@@ -80,31 +172,31 @@ function isPointInPoly(poly, pt) {
  * @param {string} address - The address of the drone booking.
  * @param {string} date - The date of the drone booking.
  */
-function droneNotifySlack(type, address, date) {
+function droneNotifySlack(type, address, day, time, timezone) {
     let text = '';
 
     if (type == 1) {
-        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}/Brisbane* cannot be done. Please inform customer and remove item from booking`;
+        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${day}, ${time}/Brisbane* cannot be done. Please inform customer and remove item from booking`;
     } else if (type == 2) {
-        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}/Brisbane* must be done after 5pm (with any drone)`;
+        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${day}, ${time}/Brisbane* must be done after 5pm (with any drone)`;
     } else if (type == 3) {
-        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}/Brisbane* has been made at Gold Coast airport. Drone must be done before 6:00am otherwise inform customer it cannot be
+        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${day}, ${time}/Brisbane* has been made at Gold Coast airport. Drone must be done before 6:00am otherwise inform customer it cannot be
 done and remove from booking. Unlocking licence required`;
     } else if (type == 4) {
-        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}/Brisbane* must be done with mini drone (anytime of day)`;
+        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${day}, ${time}/Brisbane* must be done with mini drone (anytime of day)`;
     } else if (type == 5) {
-        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}/Brisbane*. This can be done with mini drone with unlocking licence (anytime of day)`;
+        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${day}, ${time}/Brisbane*. This can be done with mini drone with unlocking licence (anytime of day)`;
     } else if (type == 6) {
-        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}/Brisbane* cannot be done. Please inform customer and remove item from booking`;
+        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${day}, ${time}/Brisbane* cannot be done. Please inform customer and remove item from booking`;
     } else if (type == 7) {
-        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}/Brisbane* must be done after 5pm with mini drone and unlocking licence`;
+        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${day}, ${time}/Brisbane* must be done after 5pm with mini drone and unlocking licence`;
     } else if (type == 8) {
-        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}/Brisbane* has been made at Gold Coast airport. Drone must be done before 6:00am otherwise inform customer it cannot be
+        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${day}, ${time}/Brisbane* has been made at Gold Coast airport. Drone must be done before 6:00am otherwise inform customer it cannot be
 done and remove from booking. Unlocking licence required`;
     } else if (type == 9) {
-        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${date}/Brisbane* is near Amberley. Please check details, an unlocking licence may be required`;
+        text = `*DRONE BOOKING*\nDrone booking *${address}* on *${day}, ${time}/Brisbane* is near Amberley. Please check details, an unlocking licence may be required`;
     } else if (type == 10) {
-        text = `*COMMERCIAL BOOKING*\nCommercial Booking *${address}* on *${date}/Brisbane*\nCheck, call agent about the job and move onto a FT photographer`;
+        text = `*COMMERCIAL BOOKING*\nCommercial Booking *${address}* on *${day}, ${time}/Brisbane*\nCheck, call agent about the job and move onto a FT photographer`;
     }
 
     web.chat
@@ -118,6 +210,99 @@ done and remove from booking. Unlocking licence required`;
         .catch((error) => {
             console.error('Error:', error);
         });
+
+    //Monday Ticket
+    const today = moment();
+    const bookingDate = moment.tz(day, "dddd, DD MMM, YYYY", timezone);
+    const scheduledTimeStart = moment.tz(time.split(' - ')[0], ["h:mm A"], timezone);
+    const formattedDate = bookingDate.format('YYYY-MM-DD');
+    const formattedTime = scheduledTimeStart.format('HH:mm');
+    let flag = false;
+    let type_Title;
+    if (type === 10) {
+        type_Title = "COMMERCIAL BOOKING"
+    } else {
+        type_Title = 'DRONE BOOKING'
+    }
+    console.log('----------------------------------- Type_Title:', type_Title);
+
+    if (bookingDate.isSame(today, 'day')) {
+        console.log('-------------------------------------------Same Day: True');
+
+        const hoursDifference = scheduledTimeStart.diff(today, 'hours');
+        if (Math.abs(hoursDifference) <= 2) {
+            console.log('-------------------------------------------Same Hour: True');
+            const itemColumnValues = {
+                "status_1__1": "ADMIN",
+                "status": type_Title,
+                "date_10__1": formattedDate,
+                "hour4__1": {
+                    "hour": parseInt(formattedTime.split(':')[0]),
+                    "minute": parseInt(formattedTime.split(':')[1])
+                }
+            };
+            const query = `
+                    mutation {
+                        create_item (
+                            board_id: 7012463051,
+                            group_id: "group_title",
+                            item_name: ${address},
+                            column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
+                        ) {
+                        id
+                        }
+                    }
+                    `;
+            createMondayTickeet(query);
+            flag = true;
+        }
+    }
+    if (flag === false) {
+        console.log('-------------------------------------------Same Day: False');
+
+        const itemColumnValues = {
+            "status_1__1": "ADMIN",
+            "status": type_Title,
+            "date_10__1": formattedDate,
+            "hour4__1": {
+                "hour": parseInt(formattedTime.split(':')[0]),
+                "minute": parseInt(formattedTime.split(':')[1])
+            }
+        };
+
+        console.log('------------------------------------ItemColumValues:', itemColumnValues);
+
+        const query = `
+                        mutation {
+                            create_item (
+                                board_id: 7012463051,
+                                group_id: "new_group__1",
+                                item_name: ${address},
+                                column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
+                            ) {
+                            id
+                            }
+                        }
+                        `;
+        createMondayTickeet(query);
+    } else {
+        flag = false;
+    }
+}
+
+function createMondayTickeet(query) {
+    fetch("https://api.monday.com/v2", {
+        method: 'post',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': process.env.MONDAY_API_KEY
+        },
+        body: JSON.stringify({
+            query: query
+        })
+    })
+        .then(res => console.log('-----------------------------Moanday Success:', res.json()))
+        .then(res => console.log('-----------------------------Moanday Fail:', JSON.stringify(res, null, 2)));
 }
 
 function sendTextMessage(phoneNumber) {
