@@ -152,7 +152,7 @@ app.post('/webhook', (req, res) => {
 
             if (isPointInPoly(poly, pt)) {
                 console.log("The given point is in the commercial Point : ", feature.properties.name);
-                droneNotifySlack(10, data.dorderName + '-' + data.agentName, data.date + ", " + data.scheduled_time)
+                droneNotifySlack(10, data.orderName, data.date, data.scheduled_time, data.property_address.timezone)
             }
         }
 
