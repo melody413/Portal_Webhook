@@ -8,12 +8,26 @@ const cron = require('node-cron');
 
 const { moment, app } = require('../config');
 const { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack, sendTextMessage } = require('../utils');
-const { doNotSendPhotographers, allowedPhotographers, droneServices, geoShape } = require('../constant');
+const { doNotSendPhotographers, allowedPhotographers, droneServices, geoShape, cityDroneServices } = require('../constant');
 const DOMParser = require("xmldom").DOMParser;
 const kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Airports.kml', "utf8"));
 const converted = tj.kml(kml);
+
 const commerical_kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Commercial.kml', "utf8"));
 const converted_commerical = tj.kml(commerical_kml);
+
+const airport_drone_kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Untitled.kml', "utf8"));
+const converted_airport = tj.kml(airport_drone_kml);
+
+var pt = { x: 153.0310235617425, y: -27.46135768681637 };
+
+for (var i = 0; i < converted_airport.features.length; i++) {
+    feature = converted_airport.features[i];
+    poly = feature.geometry.coordinates;
+
+    console.log('--------------------', poly);
+    console.log("The given point is in the new city Point : ", feature.properties.name);
+}
 
 app.post('/booking-change', (req, res) => {
     const data = JSON.parse(req.body);
@@ -95,12 +109,15 @@ app.post('/webhook', (req, res) => {
     const services = data.services;
     const services_a_la_cart = data.services_a_la_cart;
     const property_address = data.property_address;
-    // const agentName = data.listingAgents[0].displayName;
+
     const isDroneServiceIncluded = services.some(service => droneServices.includes(service));
     const isDroneServiceIncludedInAlaCart = services_a_la_cart.some(service => droneServices.includes(service));
 
+    const isDroneServiceIncluded1 = services.some(service => cityDroneServices.includes(service));
+    const isDroneServiceIncludedInAlaCart1 = services_a_la_cart.some(service => cityDroneServices.includes(service));
+
     if (isDroneServiceIncluded || isDroneServiceIncludedInAlaCart) {
-        // console.log("One of the Drone Services is involved either in services or services_a_la_cart");
+        console.log("One of the Drone Services is involved either in services or services_a_la_cart");
         var pt = { x: property_address.lng, y: property_address.lat };
 
         let placeMarkNames = [];
@@ -155,7 +172,20 @@ app.post('/webhook', (req, res) => {
                 droneNotifySlack(10, data.orderName, data.date, data.scheduled_time, data.property_address.timezone)
             }
         }
+    } else if (isDroneServiceIncluded1 || isDroneServiceIncludedInAlaCart1) {
+        console.log("One of the City Drone Services is involved either in services or services_a_la_cart");
+        var pt = { x: property_address.lng, y: property_address.lat };
 
+        for (var i = 0; i < converted_airport.features.length; i++) {
+            feature = converted_airport.features[i];
+            poly = feature.geometry.coordinates;
+
+            console.log('--------------------', poly);
+            // if (isPointInPoly(poly, pt)) {
+            //     console.log("The given point is in the new city Point : ", feature.properties.name);
+            //     droneNotifySlack(11, data.orderName, data.date, data.scheduled_time, data.property_address.timezone)
+            // }
+        }
     } else {
         console.log("None of the Drone Services are involved in services or services_a_la_cart");
     }
