@@ -19,18 +19,6 @@ const converted_commerical = tj.kml(commerical_kml);
 const airport_drone_kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Untitled.kml', "utf8"));
 const converted_airport = tj.kml(airport_drone_kml);
 
-var pt = { x: 153.0310235617425, y: -27.46135768681637 };
-
-for (var i = 0; i < converted_airport.features.length; i++) {
-    feature = converted_airport.features[i];
-    poly = feature.geometry.coordinates;
-
-    console.log('--------------------', poly);
-    if (isPointInPoly(poly, pt)) {
-        console.log("The given point is in the new city Point : ", feature.properties.name);
-    }
-}
-
 app.post('/booking-change', (req, res) => {
     const data = JSON.parse(req.body);
 
@@ -107,6 +95,7 @@ app.post('/booking-change', (req, res) => {
 
 app.post('/webhook', (req, res) => {
     const data = JSON.parse(req.body);
+    console.log('----Data:', data);
 
     const services = data.services;
     const services_a_la_cart = data.services_a_la_cart;
@@ -117,6 +106,25 @@ app.post('/webhook', (req, res) => {
 
     const isDroneServiceIncluded1 = services.some(service => cityDroneServices.includes(service));
     const isDroneServiceIncludedInAlaCart1 = services_a_la_cart.some(service => cityDroneServices.includes(service));
+
+
+    var pt = { x: property_address.lng, y: property_address.lat };
+
+    for (var i = 0; i < converted_airport.features.length; i++) {
+        feature = converted_airport.features[i];
+        poly = feature.geometry.coordinates;
+
+        if (isPointInPoly(poly, pt)) {
+            console.log("The given point is in the new city Point : ", feature.properties.name);
+
+            if (isDroneServiceIncluded1 || isDroneServiceIncludedInAlaCart1) {
+                console.log("One of the City Drone Services is involved either in services or services_a_la_cart");
+                droneNotifySlack(11, data.orderName, data.date, data.scheduled_time, data.property_address.timezone)
+            } else {
+                console.log("One of the City Drone Services is not involved either in services or services_a_la_cart");
+            }
+        }
+    }
 
     if (isDroneServiceIncluded || isDroneServiceIncludedInAlaCart) {
         console.log("One of the Drone Services is involved either in services or services_a_la_cart");
@@ -172,20 +180,6 @@ app.post('/webhook', (req, res) => {
             if (isPointInPoly(poly, pt)) {
                 console.log("The given point is in the commercial Point : ", feature.properties.name);
                 droneNotifySlack(10, data.orderName, data.date, data.scheduled_time, data.property_address.timezone)
-            }
-        }
-    } else if (isDroneServiceIncluded1 || isDroneServiceIncludedInAlaCart1) {
-        console.log("One of the City Drone Services is involved either in services or services_a_la_cart");
-        var pt = { x: property_address.lng, y: property_address.lat };
-
-        for (var i = 0; i < converted_airport.features.length; i++) {
-            feature = converted_airport.features[i];
-            poly = feature.geometry.coordinates;
-
-            console.log('--------------------', poly);
-            if (isPointInPoly(poly, pt)) {
-                console.log("The given point is in the new city Point : ", feature.properties.name);
-                droneNotifySlack(11, data.orderName, data.date, data.scheduled_time, data.property_address.timezone)
             }
         }
     } else {
