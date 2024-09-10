@@ -26,7 +26,9 @@ for (var i = 0; i < converted_airport.features.length; i++) {
     poly = feature.geometry.coordinates;
 
     console.log('--------------------', poly);
-    console.log("The given point is in the new city Point : ", feature.properties.name);
+    if (isPointInPoly(poly, pt)) {
+        console.log("The given point is in the new city Point : ", feature.properties.name);
+    }
 }
 
 app.post('/booking-change', (req, res) => {
@@ -181,10 +183,10 @@ app.post('/webhook', (req, res) => {
             poly = feature.geometry.coordinates;
 
             console.log('--------------------', poly);
-            // if (isPointInPoly(poly, pt)) {
-            //     console.log("The given point is in the new city Point : ", feature.properties.name);
-            //     droneNotifySlack(11, data.orderName, data.date, data.scheduled_time, data.property_address.timezone)
-            // }
+            if (isPointInPoly(poly, pt)) {
+                console.log("The given point is in the new city Point : ", feature.properties.name);
+                droneNotifySlack(11, data.orderName, data.date, data.scheduled_time, data.property_address.timezone)
+            }
         }
     } else {
         console.log("None of the Drone Services are involved in services or services_a_la_cart");
