@@ -361,4 +361,4 @@ function sendMessage(phoneNumber) {
     //     .catch(err => console.error(err));
 }
 
-module.exports = { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack, sendTextMessage };
+module.exports = { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack, sendTextMessage, createMondayTickeet };
