@@ -59,35 +59,35 @@ app.post('/booking-change', (req, res) => {
         const phoneNumber = data.phone_number;
         console.log('***phoneNumber', phoneNumber);
 
-        //read the file with previous sent messages
-        fs.readFile('messages.json', (err, data) => {
-            if (err) throw err;
+        // //read the file with previous sent messages
+        // fs.readFile('messages.json', (err, data) => {
+        //     if (err) throw err;
 
-            let messages = JSON.parse(data);
-            //Find if a message has already been sent within 180 days
-            let foundMessage = messages.find(message => {
-                return message.phoneNumber === phoneNumber && moment().diff(moment(message.date), 'days') <= 180
-            });
-            console.log('*** FoundMessage', foundMessage);
-            if (!foundMessage) {
-                //If message not found, send a text message
-                let message = {
-                    phoneNumber: phoneNumber,
-                    date: moment().format()
-                };
-                //Add to messages array
-                messages.push(message);
+        //     let messages = JSON.parse(data);
+        //     //Find if a message has already been sent within 180 days
+        //     let foundMessage = messages.find(message => {
+        //         return message.phoneNumber === phoneNumber && moment().diff(moment(message.date), 'days') <= 180
+        //     });
+        //     console.log('*** FoundMessage', foundMessage);
+        //     if (!foundMessage) {
+        //         //If message not found, send a text message
+        //         let message = {
+        //             phoneNumber: phoneNumber,
+        //             date: moment().format()
+        //         };
+        //         //Add to messages array
+        //         messages.push(message);
 
-                // Update the messages file
-                fs.writeFile('messages.json', JSON.stringify(messages), err => {
-                    if (err) throw err;
-                });
+        //         // Update the messages file
+        //         fs.writeFile('messages.json', JSON.stringify(messages), err => {
+        //             if (err) throw err;
+        //         });
 
-                cron.schedule('0 */4 * * *', () => {
-                    console.log('***This is a cron after 4 hoursa');
-                });
-            }
-        });
+        //         cron.schedule('0 */4 * * *', () => {
+        //             console.log('***This is a cron after 4 hoursa');
+        //         });
+        //     }
+        // });
     }
 
     res.send('Data processed!');
