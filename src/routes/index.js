@@ -95,7 +95,7 @@ app.post('/booking-change', (req, res) => {
 
 app.post('/webhook', (req, res) => {
     const data = JSON.parse(req.body);
-    console.log('----Data:', data);
+    // console.log('----Data:', data);
 
     const services = data.services;
     const services_a_la_cart = data.services_a_la_cart;

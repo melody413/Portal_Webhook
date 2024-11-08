@@ -3,6 +3,7 @@ const { web, moment, channelId } = require('../config');
 const turf = require('@turf/turf');
 const fs = require('fs');
 const cron = require('node-cron');
+const axios = require('axios');
 
 /**
  * This function is responsible for sending a cancellation alert to a Slack channel.
@@ -376,7 +377,7 @@ async function monday_Ticketing() {
                         items {
                             id,
                             name,
-                            column_values(ids: ["name", "text", "department"]){
+                            column_values(ids: ["name", "text", "department", "time_tracking3__1"]){
                                 id
                                 text
                                 value
@@ -410,43 +411,80 @@ async function monday_Ticketing() {
             let formattedTime = today.getHours() + ":" + today.getMinutes();
 
             items?.forEach(async element => {
-                const itemColumnValues = {
-                    "status_1__1": "EDITS",
-                    "status": 'TICKET',
-                    "status__1": 'ADVISORY',
-                    "date_10__1": formattedDate,
-                    "hour4__1": {
-                        "hour": parseInt(formattedTime.split(':')[0]),
-                        "minute": parseInt(formattedTime.split(':')[1])
-                    }
-                };
-                const query = `
-                    mutation {
-                        create_item (
-                            board_id: 7012463051,
-                            group_id: "new_group__1",
-                            item_name: "[${element.name}][${element.column_values[0].text}][${element.column_values[1].text}]",
-                            column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
-                        ) {
-                        id
+
+                const delivery_time = element.column_values[2].text
+                console.log('-Delivery time value:', delivery_time);
+                const timeParts = delivery_time.split(':');
+                const minsutes = parseInt(timeParts[0], 10) * 60 + parseInt(timeParts[1], 10);
+
+                console.log('time diff:', minsutes);
+
+                if (minsutes >= 10) {
+                    const advisoryQuery = `
+                        query {
+                            boards (ids: 7012463051) {
+                                groups (ids: "new_group__1") {
+                                    items_page (limit: 500) {
+                                        items {
+                                            id,
+                                            name
+                                        }
+                                    }
+                                }
+                            }
+                            complexity {
+                                query
+                            }
                         }
-                    }
                     `;
-                await axios({
-                    url: 'https://api.monday.com/v2',
-                    method: 'post',
-                    headers: {
-                        Authorization: process.env.MONDAY_API_KEY,
-                        'Content-Type': 'application/json'
-                    },
-                    data: JSON.stringify({ query })
-                })
-                    .then(async result => {
-                        if (result.errors) {
-                            console.error("API responded with errors", result.errors);
-                            return;
-                        }
-                        let query = `mutation { delete_item (item_id: ${element.id}) { id }}`;
+
+                    // Check if the item already exists in the Advisory group
+                    const advisoryResult = await axios({
+                        url: 'https://api.monday.com/v2',
+                        method: 'post',
+                        headers: {
+                            Authorization: process.env.MONDAY_API_KEY,
+                            'Content-Type': 'application/json'
+                        },
+                        data: JSON.stringify({ query: advisoryQuery })
+                    });
+
+                    if (advisoryResult.errors) {
+                        console.error("API responded with errors while fetching Advisory group items", advisoryResult.errors);
+                        return;
+                    }
+
+                    const advisoryItems = advisoryResult.data.data.boards[0].groups[0].items_page.items;
+                    console.log('----AdvisoruItems', advisoryItems.length);
+
+                    const advisoryItemExists = advisoryItems.some(advisoryItem => advisoryItem.name === `${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}`);
+
+                    if (!advisoryItemExists) {
+                        console.log('---not exist');
+
+                        const itemColumnValues = {
+                            "status_1__1": "EDITS",
+                            "status": 'TICKET',
+                            "status__1": 'ADVISORY',
+                            "date_10__1": formattedDate,
+                            "hour4__1": {
+                                "hour": parseInt(formattedTime.split(':')[0]),
+                                "minute": parseInt(formattedTime.split(':')[1])
+                            }
+                        };
+
+                        const query = `
+                            mutation {
+                                create_item (
+                                    board_id: 7012463051,
+                                    group_id: "new_group__1",
+                                    item_name: "${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}",
+                                    column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
+                                ) {
+                                id
+                                }
+                            }
+                            `;
 
                         await axios({
                             url: 'https://api.monday.com/v2',
@@ -457,21 +495,18 @@ async function monday_Ticketing() {
                             },
                             data: JSON.stringify({ query })
                         })
-                            .then(result => {
+                            .then(async result => {
                                 if (result.errors) {
                                     console.error("API responded with errors", result.errors);
                                     return;
                                 }
-                                console.log('Delete item on the Edit group:', element.id)
+
                             })
                             .catch(err => {
 
                             })
-                    })
-                    .catch(err => {
-
-                    })
-
+                    }
+                }
             });
         })
         .catch(err => {
@@ -512,6 +547,7 @@ async function monday_Ticketing() {
     })
         .then(result => {
             const items = result.data.data.boards[0].groups[0].items_page.items;
+
             items?.forEach(async element => {
                 console.log('Each item in New Request group :', element);
                 const totalTime = element.column_values[2].text;
@@ -520,74 +556,97 @@ async function monday_Ticketing() {
 
                 // Convert the time to minutes
                 const totalTimeInMinutes = parseInt(hours) * 60 + parseInt(minutes) + parseInt(seconds) / 60;
+                console.log('totalTimeInMinutes:', totalTimeInMinutes);
 
                 // Check if the totalTimeInMinutes is equal to or greater than 5
                 if (totalTimeInMinutes >= 5) {
                     console.log("Total time is equal to or greater than 5 minutes.");
-                    let today = new Date();
-                    let formattedDate = today.getFullYear() + '-' + (today.getMonth() + 1).toString().padStart(2, '0') + '-' + today.getDate().toString().padStart(2, '0');
-                    let formattedTime = today.getHours() + ":" + today.getMinutes();
-                    const itemColumnValues = {
-                        "status_1__1": "EDITS",
-                        "status": 'TICKET',
-                        "status__1": 'ADVISORY',
-                        "date_10__1": formattedDate,
-                        "hour4__1": {
-                            "hour": parseInt(formattedTime.split(':')[0]),
-                            "minute": parseInt(formattedTime.split(':')[1])
+                    const advisoryQuery = `
+                        query {
+                            boards (ids: 7012463051) {
+                                groups (ids: "new_group__1") {
+                                    items_page (limit: 500) {
+                                        items {
+                                            id,
+                                            name
+                                        }
+                                    }
+                                }
+                            }
+                            complexity {
+                                query
+                            }
                         }
-                    };
-                    const query = `
-                    mutation {
-                        create_item (
-                            board_id: 7012463051,
-                            group_id: "new_group__1",
-                            item_name: "[${element.name}][${element.column_values[0].text}][${element.column_values[1].text}]",
-                            column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
-                        ) {
-                        id
-                        }
-                    }
                     `;
-                    await axios({
+
+                    // Check if the item already exists in the Advisory group
+                    const advisoryResult = await axios({
                         url: 'https://api.monday.com/v2',
                         method: 'post',
                         headers: {
                             Authorization: process.env.MONDAY_API_KEY,
                             'Content-Type': 'application/json'
                         },
-                        data: JSON.stringify({ query })
-                    })
-                        .then(async result => {
-                            if (result.errors) {
-                                console.error("API responded with errors", result.errors);
-                                return;
+                        data: JSON.stringify({ query: advisoryQuery })
+                    });
+
+                    if (advisoryResult.errors) {
+                        console.error("API responded with errors while fetching Advisory group items", advisoryResult.errors);
+                        return;
+                    }
+
+                    const advisoryItems = advisoryResult.data.data.boards[0].groups[0].items_page.items;
+                    console.log('----AdvisoruItems', advisoryItems.length);
+
+                    const advisoryItemExists = advisoryItems.some(advisoryItem => advisoryItem.name === `${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}`);
+                    if (!advisoryItemExists) {
+                        console.log('------------ not exist');
+
+                        let today = new Date();
+                        let formattedDate = today.getFullYear() + '-' + (today.getMonth() + 1).toString().padStart(2, '0') + '-' + today.getDate().toString().padStart(2, '0');
+                        let formattedTime = today.getHours() + ":" + today.getMinutes();
+                        const itemColumnValues = {
+                            "status_1__1": "EDITS",
+                            "status": 'TICKET',
+                            "status__1": 'ADVISORY',
+                            "date_10__1": formattedDate,
+                            "hour4__1": {
+                                "hour": parseInt(formattedTime.split(':')[0]),
+                                "minute": parseInt(formattedTime.split(':')[1])
                             }
-                            let query = `mutation { delete_item (item_id: ${element.id}) { id }}`;
-
-                            await axios({
-                                url: 'https://api.monday.com/v2',
-                                method: 'post',
-                                headers: {
-                                    Authorization: process.env.MONDAY_API_KEY,
-                                    'Content-Type': 'application/json'
-                                },
-                                data: JSON.stringify({ query })
+                        };
+                        const query = `
+                            mutation {
+                                create_item (
+                                    board_id: 7012463051,
+                                    group_id: "new_group__1",
+                                    item_name: "${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}",
+                                    column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
+                                ) {
+                                id
+                                }
+                            }
+                        `;
+                        await axios({
+                            url: 'https://api.monday.com/v2',
+                            method: 'post',
+                            headers: {
+                                Authorization: process.env.MONDAY_API_KEY,
+                                'Content-Type': 'application/json'
+                            },
+                            data: JSON.stringify({ query })
+                        })
+                            .then(async result => {
+                                if (result.errors) {
+                                    console.error("API responded with errors", result.errors);
+                                    return;
+                                }
                             })
-                                .then(result => {
-                                    if (result.errors) {
-                                        console.error("API responded with errors", result.errors);
-                                        return;
-                                    }
-                                    console.log('Delete item on the Edit group:', element.id)
-                                })
-                                .catch(err => {
+                            .catch(err => {
 
-                                })
-                        })
-                        .catch(err => {
+                            })
+                    }
 
-                        })
 
 
                 } else {
