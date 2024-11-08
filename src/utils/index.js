@@ -368,6 +368,8 @@ function sendMessage(phoneNumber) {
 
 async function monday_Ticketing() {
     console.log("This function is called every X milliseconds");
+
+    let allTicketingItems = []
     //Get the items from Edit group
     const query = `
         query {
@@ -411,13 +413,11 @@ async function monday_Ticketing() {
             let formattedTime = today.getHours() + ":" + today.getMinutes();
 
             items?.forEach(async element => {
-
+                allTicketingItems.push(`${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}`)
                 const delivery_time = element.column_values[2].text
-                console.log('-Delivery time value:', delivery_time);
                 const timeParts = delivery_time.split(':');
                 const minsutes = parseInt(timeParts[0], 10) * 60 + parseInt(timeParts[1], 10);
 
-                console.log('time diff:', minsutes);
 
                 if (minsutes >= 10) {
                     const advisoryQuery = `
@@ -507,6 +507,7 @@ async function monday_Ticketing() {
                             })
                     }
                 }
+
             });
         })
         .catch(err => {
@@ -549,14 +550,12 @@ async function monday_Ticketing() {
             const items = result.data.data.boards[0].groups[0].items_page.items;
 
             items?.forEach(async element => {
-                console.log('Each item in New Request group :', element);
+                allTicketingItems.push(`${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}`)
                 const totalTime = element.column_values[2].text;
-                console.log('Total Time:', totalTime);
                 const [hours, minutes, seconds] = totalTime.split(':');
 
                 // Convert the time to minutes
                 const totalTimeInMinutes = parseInt(hours) * 60 + parseInt(minutes) + parseInt(seconds) / 60;
-                console.log('totalTimeInMinutes:', totalTimeInMinutes);
 
                 // Check if the totalTimeInMinutes is equal to or greater than 5
                 if (totalTimeInMinutes >= 5) {
@@ -647,17 +646,97 @@ async function monday_Ticketing() {
                             })
                     }
 
-
-
-                } else {
-                    console.log("Total time is less than 5 minutes.");
                 }
 
-
             });
+
         })
         .catch(err => {
             console.log('err', err);
         });
+
+    console.log('-------------Total ticketing items:', allTicketingItems);
+
+    const targetGroupId = "new_group32010__1";
+
+    const advisoryQuery = `
+                        query {
+                            boards (ids: 7012463051) {
+                                groups (ids: "new_group__1") {
+                                    items_page (limit: 500) {
+                                        items {
+                                            id,
+                                            name
+                                            column_values(ids: ["status"]){
+                                                id
+                                                text
+                                                value
+                                                type
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            complexity {
+                                query
+                            }
+                        }
+                    `;
+
+    const advisoryResult = await axios({
+        url: 'https://api.monday.com/v2',
+        method: 'post',
+        headers: {
+            Authorization: process.env.MONDAY_API_KEY,
+            'Content-Type': 'application/json'
+        },
+        data: JSON.stringify({ query: advisoryQuery })
+    });
+
+    if (advisoryResult.errors) {
+        console.error("API responded with errors while fetching Advisory group items", advisoryResult.errors);
+        return;
+    }
+
+    const advisoryItems = advisoryResult.data.data.boards[0].groups[0].items_page.items;
+    const filteredAdvisoryItems = advisoryItems.filter(item => item.column_values[0].text === 'TICKET');
+
+
+    console.log('-----Number 1:', advisoryItems.length);
+    console.log('-----Number 2:', filteredAdvisoryItems.length);
+    for (const item of filteredAdvisoryItems) {
+        const itemName = item.name;
+        if (!allTicketingItems.includes(itemName)) {
+            console.log(`Item ${itemName} is not in the array, moving to new group...`);
+            const mutation = `
+                    mutation {
+                        move_item_to_group (item_id: ${item.id}, group_id: "${targetGroupId}") {
+                            id
+                        }
+                    }
+                `;
+            await axios({
+                url: 'https://api.monday.com/v2',
+                method: 'post',
+                headers: {
+                    Authorization: process.env.MONDAY_API_KEY,
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({ query: mutation })
+            })
+                .then(response => {
+                    if (response.errors) {
+                        console.error("Error moving item:", response.errors);
+                    } else {
+                        console.log(`Item ${itemName} moved successfully.`);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error during the mutation request:", error);
+                });
+        }
+    }
+
+
 }
 module.exports = { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack, sendTextMessage, createMondayTickeet, monday_Ticketing };
