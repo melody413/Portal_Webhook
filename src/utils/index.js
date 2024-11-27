@@ -210,6 +210,9 @@ done and remove from booking. Unlocking licence required`;
         text = `*COMMERCIAL BOOKING*\nCommercial Booking *${address}* on *${day}, ${time}/Brisbane*\nCheck, call agent about the job and move onto a FT photographer`;
     } else if (type == 11) {
         text = `*DRONE BOOKING IN CITY*\n*${address}* has been made on *${day}, ${time}/Brisbane*. Immediately put a note on photographers calendar to not do drone and inform agent.`;
+    } else if (type == 12) {
+        text = `*DRONE BOOKING*\n*Drone booking ${address}* on *${day}, ${time}/Brisbane* requires unlocking license`;
+
     }
 
     console.log('--------------------', text);

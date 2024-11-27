@@ -55,7 +55,8 @@ const geoShape = {
     // "Splays Never1": ["Splay 4", "Splay 3", "Splay 5"],
     "Splays After 5pm": ["Splay 8", "Splay 10", "Splay 11", "Splay 9"],
     "Splay before 6:00am": ["Splay 7", "Splay 2", "Splay 6"],
-    "Unlocking Licence": ["Unlocking Licence 1", "Unlocking Licence 2", "Unlocking Licence 4"]
+    "Unlocking Licence": ["Unlocking Licence 1", "Unlocking Licence 2", "Unlocking Licence 4"],
+    "New Airports": ["Redcliffe"]
 };
 
 module.exports = { doNotSendPhotographers, allowedPhotographers, droneServices, cityDroneServices, geoShape };

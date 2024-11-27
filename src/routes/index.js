@@ -10,7 +10,7 @@ const { moment, app } = require('../config');
 const { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack, sendTextMessage } = require('../utils');
 const { doNotSendPhotographers, allowedPhotographers, droneServices, geoShape, cityDroneServices } = require('../constant');
 const DOMParser = require("xmldom").DOMParser;
-const kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Airports.kml', "utf8"));
+const kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Airports1.kml', "utf8"));
 const converted = tj.kml(kml);
 
 const commerical_kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Commercial.kml', "utf8"));
@@ -176,6 +176,8 @@ app.post('/webhook', (req, res) => {
                 droneNotifySlack(8, data.orderName, data.date, data.scheduled_time, data.property_address.timezone, photographerName)
             } else if (folders.length == 1 && folders[0] == 'Splays Never1') {
                 droneNotifySlack(9, data.orderName, data.date, data.scheduled_time, data.property_address.timezone, photographerName)
+            } else if (folders.length == 1 && folders[0] == 'New Airports') {
+                droneNotifySlack(12, data.orderName, data.date, data.scheduled_time, data.property_address.timezone, photographerName)
             }
         }
 
