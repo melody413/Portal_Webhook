@@ -368,375 +368,387 @@ function sendMessage(phoneNumber) {
 
 async function monday_Ticketing() {
     console.log("This function is called every X milliseconds");
-
-    let allTicketingItems = []
-    //Get the items from Edit group
-    const query = `
-        query {
-            boards (ids: 1642511224) {
-                groups (ids: "new_group50030") {
-                    items_page {
-                        items {
-                            id,
-                            name,
-                            column_values(ids: ["name", "text", "department", "time_tracking3__1"]){
-                                id
-                                text
-                                value
-                                type
+    try {
+        let allTicketingItems = []
+        //Get the items from Edit group
+        const query = `
+            query {
+                boards (ids: 1642511224) {
+                    groups (ids: "new_group50030") {
+                        items_page {
+                            items {
+                                id,
+                                name,
+                                column_values(ids: ["name", "text", "department", "time_tracking3__1"]){
+                                    id
+                                    text
+                                    value
+                                    type
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-        `;
+            `;
 
-    await axios({
-        url: 'https://api.monday.com/v2',
-        method: 'post',
-        headers: {
-            Authorization: process.env.MONDAY_API_KEY,
-            'Content-Type': 'application/json'
-        },
-        data: JSON.stringify({ query })
-    })
-        .then(result => {
-            if (result.errors) {
-                console.error("API responded with errors", result.errors);
-                return;
-            }
-            const items = result.data.data.boards[0].groups[0].items_page.items;
-
-            let today = new Date();
-            let formattedDate = today.getFullYear() + '-' + (today.getMonth() + 1).toString().padStart(2, '0') + '-' + today.getDate().toString().padStart(2, '0');
-            let formattedTime = today.getHours() + ":" + today.getMinutes();
-
-            items?.forEach(async element => {
-                allTicketingItems.push(`${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}`)
-                const delivery_time = element.column_values[2].text
-                const timeParts = delivery_time.split(':');
-                const minsutes = parseInt(timeParts[0], 10) * 60 + parseInt(timeParts[1], 10);
-
-
-                if (minsutes >= 10) {
-                    const advisoryQuery = `
-                        query {
-                            boards (ids: 7012463051) {
-                                groups (ids: "new_group__1") {
-                                    items_page (limit: 500) {
-                                        items {
-                                            id,
-                                            name
-                                        }
-                                    }
-                                }
-                            }
-                            complexity {
-                                query
-                            }
-                        }
-                    `;
-
-                    // Check if the item already exists in the Advisory group
-                    const advisoryResult = await axios({
-                        url: 'https://api.monday.com/v2',
-                        method: 'post',
-                        headers: {
-                            Authorization: process.env.MONDAY_API_KEY,
-                            'Content-Type': 'application/json'
-                        },
-                        data: JSON.stringify({ query: advisoryQuery })
-                    });
-
-                    if (advisoryResult.errors) {
-                        console.error("API responded with errors while fetching Advisory group items", advisoryResult.errors);
-                        return;
-                    }
-
-                    const advisoryItems = advisoryResult.data.data.boards[0].groups[0].items_page.items;
-                    console.log('----AdvisoruItems', advisoryItems.length);
-
-                    const advisoryItemExists = advisoryItems.some(advisoryItem => advisoryItem.name === `${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}`);
-
-                    if (!advisoryItemExists) {
-                        console.log('---not exist');
-
-                        const itemColumnValues = {
-                            "status_1__1": "EDITS",
-                            "status": 'TICKET',
-                            "status__1": 'ADVISORY',
-                            "date_10__1": formattedDate,
-                            "hour4__1": {
-                                "hour": parseInt(formattedTime.split(':')[0]),
-                                "minute": parseInt(formattedTime.split(':')[1])
-                            }
-                        };
-
-                        const query = `
-                            mutation {
-                                create_item (
-                                    board_id: 7012463051,
-                                    group_id: "new_group__1",
-                                    item_name: "${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}",
-                                    column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
-                                ) {
-                                id
-                                }
-                            }
-                            `;
-
-                        await axios({
-                            url: 'https://api.monday.com/v2',
-                            method: 'post',
-                            headers: {
-                                Authorization: process.env.MONDAY_API_KEY,
-                                'Content-Type': 'application/json'
-                            },
-                            data: JSON.stringify({ query })
-                        })
-                            .then(async result => {
-                                if (result.errors) {
-                                    console.error("API responded with errors", result.errors);
-                                    return;
-                                }
-
-                            })
-                            .catch(err => {
-
-                            })
-                    }
-                }
-
-            });
+        await axios({
+            url: 'https://api.monday.com/v2',
+            method: 'post',
+            headers: {
+                Authorization: process.env.MONDAY_API_KEY,
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify({ query })
         })
-        .catch(err => {
-            console.log('err', err);
-        });
-
-
-    //Get the items from New Requests group
-    const query1 = `
-        query {
-            boards (ids: 1642511224) {
-                groups (ids: "topics") {
-                    items_page {
-                        items {
-                            id,
-                            name,
-                            column_values(ids: ["name", "text", "department", "time_tracking9"]){
-                                id
-                                text
-                                value
-                                type
-                            }
-                        }
-                    }
+            .then(result => {
+                if (result.errors) {
+                    console.error("API responded with errors", result.errors);
+                    return;
                 }
-            }
-        }
-        `;
+                const items = result.data.data.boards[0].groups[0].items_page.items;
 
-    await axios({
-        url: 'https://api.monday.com/v2',
-        method: 'post',
-        headers: {
-            Authorization: process.env.MONDAY_API_KEY,
-            'Content-Type': 'application/json'
-        },
-        data: JSON.stringify({ query: query1 })
-    })
-        .then(result => {
-            const items = result.data.data.boards[0].groups[0].items_page.items;
+                let today = new Date();
+                let formattedDate = today.getFullYear() + '-' + (today.getMonth() + 1).toString().padStart(2, '0') + '-' + today.getDate().toString().padStart(2, '0');
 
-            items?.forEach(async element => {
-                allTicketingItems.push(`${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}`)
-                const totalTime = element.column_values[2].text;
-                const [hours, minutes, seconds] = totalTime.split(':');
+                // Get the current time in UTC
+                let utcHours = today.getUTCHours();
+                let utcMinutes = today.getUTCMinutes();
 
-                // Convert the time to minutes
-                const totalTimeInMinutes = parseInt(hours) * 60 + parseInt(minutes) + parseInt(seconds) / 60;
+                // Adjust for Brisbane time (UTC +10)
+                let brisbaneHours = (utcHours + 10) % 24; // Wrap around if over 24 hours
+                let brisbaneMinutes = utcMinutes;
+                let formattedTime = brisbaneHours + ":" + brisbaneMinutes.toString().padStart(2, '0');
 
-                // Check if the totalTimeInMinutes is equal to or greater than 5
-                if (totalTimeInMinutes >= 5) {
-                    console.log("Total time is equal to or greater than 5 minutes.");
-                    const advisoryQuery = `
-                        query {
-                            boards (ids: 7012463051) {
-                                groups (ids: "new_group__1") {
-                                    items_page (limit: 500) {
-                                        items {
-                                            id,
-                                            name
-                                        }
-                                    }
-                                }
-                            }
-                            complexity {
-                                query
-                            }
-                        }
-                    `;
+                items?.forEach(async element => {
+                    allTicketingItems.push(`${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}`)
+                    const delivery_time = element.column_values[2].text
+                    const timeParts = delivery_time.split(':');
+                    const minsutes = parseInt(timeParts[0], 10) * 60 + parseInt(timeParts[1], 10);
 
-                    // Check if the item already exists in the Advisory group
-                    const advisoryResult = await axios({
-                        url: 'https://api.monday.com/v2',
-                        method: 'post',
-                        headers: {
-                            Authorization: process.env.MONDAY_API_KEY,
-                            'Content-Type': 'application/json'
-                        },
-                        data: JSON.stringify({ query: advisoryQuery })
-                    });
 
-                    if (advisoryResult.errors) {
-                        console.error("API responded with errors while fetching Advisory group items", advisoryResult.errors);
-                        return;
-                    }
-
-                    const advisoryItems = advisoryResult.data.data.boards[0].groups[0].items_page.items;
-                    console.log('----AdvisoruItems', advisoryItems.length);
-
-                    const advisoryItemExists = advisoryItems.some(advisoryItem => advisoryItem.name === `${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}`);
-                    if (!advisoryItemExists) {
-                        console.log('------------ not exist');
-
-                        let today = new Date();
-                        let formattedDate = today.getFullYear() + '-' + (today.getMonth() + 1).toString().padStart(2, '0') + '-' + today.getDate().toString().padStart(2, '0');
-                        let formattedTime = today.getHours() + ":" + today.getMinutes();
-                        const itemColumnValues = {
-                            "status_1__1": "EDITS",
-                            "status": 'TICKET',
-                            "status__1": 'ADVISORY',
-                            "date_10__1": formattedDate,
-                            "hour4__1": {
-                                "hour": parseInt(formattedTime.split(':')[0]),
-                                "minute": parseInt(formattedTime.split(':')[1])
-                            }
-                        };
-                        const query = `
-                            mutation {
-                                create_item (
-                                    board_id: 7012463051,
-                                    group_id: "new_group__1",
-                                    item_name: "${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}",
-                                    column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
-                                ) {
-                                id
-                                }
-                            }
-                        `;
-                        await axios({
-                            url: 'https://api.monday.com/v2',
-                            method: 'post',
-                            headers: {
-                                Authorization: process.env.MONDAY_API_KEY,
-                                'Content-Type': 'application/json'
-                            },
-                            data: JSON.stringify({ query })
-                        })
-                            .then(async result => {
-                                if (result.errors) {
-                                    console.error("API responded with errors", result.errors);
-                                    return;
-                                }
-                            })
-                            .catch(err => {
-
-                            })
-                    }
-
-                }
-
-            });
-
-        })
-        .catch(err => {
-            console.log('err', err);
-        });
-
-    console.log('-------------Total ticketing items:', allTicketingItems);
-
-    const targetGroupId = "new_group32010__1";
-
-    const advisoryQuery = `
-                        query {
-                            boards (ids: 7012463051) {
-                                groups (ids: "new_group__1") {
-                                    items_page (limit: 500) {
-                                        items {
-                                            id,
-                                            name
-                                            column_values(ids: ["status"]){
-                                                id
-                                                text
-                                                value
-                                                type
+                    if (minsutes >= 10) {
+                        const advisoryQuery = `
+                            query {
+                                boards (ids: 7012463051) {
+                                    groups (ids: "new_group__1") {
+                                        items_page (limit: 500) {
+                                            items {
+                                                id,
+                                                name
                                             }
                                         }
                                     }
                                 }
+                                complexity {
+                                    query
+                                }
                             }
-                            complexity {
-                                query
+                        `;
+
+                        // Check if the item already exists in the Advisory group
+                        const advisoryResult = await axios({
+                            url: 'https://api.monday.com/v2',
+                            method: 'post',
+                            headers: {
+                                Authorization: process.env.MONDAY_API_KEY,
+                                'Content-Type': 'application/json'
+                            },
+                            data: JSON.stringify({ query: advisoryQuery })
+                        });
+
+                        if (advisoryResult.errors) {
+                            console.error("API responded with errors while fetching Advisory group items", advisoryResult.errors);
+                            return;
+                        }
+
+                        const advisoryItems = advisoryResult.data.data.boards[0].groups[0].items_page.items;
+                        console.log('----AdvisoruItems', advisoryItems.length);
+
+                        const advisoryItemExists = advisoryItems.some(advisoryItem => advisoryItem.name === `${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}`);
+
+                        if (!advisoryItemExists) {
+                            console.log('---not exist');
+
+                            const itemColumnValues = {
+                                "status_1__1": "EDITS",
+                                "status": 'TICKET',
+                                "status__1": 'ADVISORY',
+                                "date_10__1": formattedDate,
+                                "hour4__1": {
+                                    "hour": parseInt(formattedTime.split(':')[0]),
+                                    "minute": parseInt(formattedTime.split(':')[1])
+                                }
+                            };
+
+                            const query = `
+                                mutation {
+                                    create_item (
+                                        board_id: 7012463051,
+                                        group_id: "new_group__1",
+                                        item_name: "${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}",
+                                        column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
+                                    ) {
+                                    id
+                                    }
+                                }
+                                `;
+
+                            await axios({
+                                url: 'https://api.monday.com/v2',
+                                method: 'post',
+                                headers: {
+                                    Authorization: process.env.MONDAY_API_KEY,
+                                    'Content-Type': 'application/json'
+                                },
+                                data: JSON.stringify({ query })
+                            })
+                                .then(async result => {
+                                    if (result.errors) {
+                                        console.error("API responded with errors", result.errors);
+                                        return;
+                                    }
+
+                                })
+                                .catch(err => {
+
+                                })
+                        }
+                    }
+
+                });
+            })
+            .catch(err => {
+                console.log('err', err);
+            });
+
+
+        //Get the items from New Requests group
+        const query1 = `
+            query {
+                boards (ids: 1642511224) {
+                    groups (ids: "topics") {
+                        items_page {
+                            items {
+                                id,
+                                name,
+                                column_values(ids: ["name", "text", "department", "time_tracking9"]){
+                                    id
+                                    text
+                                    value
+                                    type
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            `;
+
+        await axios({
+            url: 'https://api.monday.com/v2',
+            method: 'post',
+            headers: {
+                Authorization: process.env.MONDAY_API_KEY,
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify({ query: query1 })
+        })
+            .then(result => {
+                const items = result.data.data.boards[0].groups[0].items_page.items;
+
+                items?.forEach(async element => {
+                    allTicketingItems.push(`${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}`)
+                    const totalTime = element.column_values[2].text;
+                    const [hours, minutes, seconds] = totalTime.split(':');
+
+                    // Convert the time to minutes
+                    const totalTimeInMinutes = parseInt(hours) * 60 + parseInt(minutes) + parseInt(seconds) / 60;
+
+                    // Check if the totalTimeInMinutes is equal to or greater than 5
+                    if (totalTimeInMinutes >= 5) {
+                        console.log("Total time is equal to or greater than 5 minutes.");
+                        const advisoryQuery = `
+                            query {
+                                boards (ids: 7012463051) {
+                                    groups (ids: "new_group__1") {
+                                        items_page (limit: 500) {
+                                            items {
+                                                id,
+                                                name
+                                            }
+                                        }
+                                    }
+                                }
+                                complexity {
+                                    query
+                                }
+                            }
+                        `;
+
+                        // Check if the item already exists in the Advisory group
+                        const advisoryResult = await axios({
+                            url: 'https://api.monday.com/v2',
+                            method: 'post',
+                            headers: {
+                                Authorization: process.env.MONDAY_API_KEY,
+                                'Content-Type': 'application/json'
+                            },
+                            data: JSON.stringify({ query: advisoryQuery })
+                        });
+
+                        if (advisoryResult.errors) {
+                            console.error("API responded with errors while fetching Advisory group items", advisoryResult.errors);
+                            return;
+                        }
+
+                        const advisoryItems = advisoryResult.data.data.boards[0].groups[0].items_page.items;
+                        console.log('----AdvisoruItems', advisoryItems.length);
+
+                        const advisoryItemExists = advisoryItems.some(advisoryItem => advisoryItem.name === `${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}`);
+                        if (!advisoryItemExists) {
+                            console.log('------------ not exist');
+
+                            let today = new Date();
+                            let formattedDate = today.getFullYear() + '-' + (today.getMonth() + 1).toString().padStart(2, '0') + '-' + today.getDate().toString().padStart(2, '0');
+                            let formattedTime = today.getHours() + ":" + today.getMinutes();
+                            const itemColumnValues = {
+                                "status_1__1": "EDITS",
+                                "status": 'TICKET',
+                                "status__1": 'ADVISORY',
+                                "date_10__1": formattedDate,
+                                "hour4__1": {
+                                    "hour": parseInt(formattedTime.split(':')[0]),
+                                    "minute": parseInt(formattedTime.split(':')[1])
+                                }
+                            };
+                            const query = `
+                                mutation {
+                                    create_item (
+                                        board_id: 7012463051,
+                                        group_id: "new_group__1",
+                                        item_name: "${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}",
+                                        column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
+                                    ) {
+                                    id
+                                    }
+                                }
+                            `;
+                            await axios({
+                                url: 'https://api.monday.com/v2',
+                                method: 'post',
+                                headers: {
+                                    Authorization: process.env.MONDAY_API_KEY,
+                                    'Content-Type': 'application/json'
+                                },
+                                data: JSON.stringify({ query })
+                            })
+                                .then(async result => {
+                                    if (result.errors) {
+                                        console.error("API responded with errors", result.errors);
+                                        return;
+                                    }
+                                })
+                                .catch(err => {
+
+                                })
+                        }
+
+                    }
+
+                });
+
+            })
+            .catch(err => {
+                console.log('err', err);
+            });
+
+        console.log('-------------Total ticketing items:', allTicketingItems);
+
+        const targetGroupId = "new_group32010__1";
+
+        const advisoryQuery = `
+                            query {
+                                boards (ids: 7012463051) {
+                                    groups (ids: "new_group__1") {
+                                        items_page (limit: 500) {
+                                            items {
+                                                id,
+                                                name
+                                                column_values(ids: ["status"]){
+                                                    id
+                                                    text
+                                                    value
+                                                    type
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                complexity {
+                                    query
+                                }
+                            }
+                        `;
+
+        const advisoryResult = await axios({
+            url: 'https://api.monday.com/v2',
+            method: 'post',
+            headers: {
+                Authorization: process.env.MONDAY_API_KEY,
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify({ query: advisoryQuery })
+        });
+
+        if (advisoryResult.errors) {
+            console.error("API responded with errors while fetching Advisory group items", advisoryResult.errors);
+            return;
+        }
+
+        const advisoryItems = advisoryResult.data.data.boards[0].groups[0].items_page.items;
+        const filteredAdvisoryItems = advisoryItems?.filter(item => item.column_values[0].text === 'TICKET');
+
+
+        console.log('-----Number 1:', advisoryItems.length);
+        console.log('-----Number 2:', filteredAdvisoryItems.length);
+        for (const item of filteredAdvisoryItems) {
+            const itemName = item.name;
+            if (!allTicketingItems.includes(itemName)) {
+                console.log(`Item ${itemName} is not in the array, moving to new group...`);
+                const mutation = `
+                        mutation {
+                            move_item_to_group (item_id: ${item.id}, group_id: "${targetGroupId}") {
+                                id
                             }
                         }
                     `;
-
-    const advisoryResult = await axios({
-        url: 'https://api.monday.com/v2',
-        method: 'post',
-        headers: {
-            Authorization: process.env.MONDAY_API_KEY,
-            'Content-Type': 'application/json'
-        },
-        data: JSON.stringify({ query: advisoryQuery })
-    });
-
-    if (advisoryResult.errors) {
-        console.error("API responded with errors while fetching Advisory group items", advisoryResult.errors);
-        return;
-    }
-
-    const advisoryItems = advisoryResult.data.data.boards[0].groups[0].items_page.items;
-    const filteredAdvisoryItems = advisoryItems.filter(item => item.column_values[0].text === 'TICKET');
-
-
-    console.log('-----Number 1:', advisoryItems.length);
-    console.log('-----Number 2:', filteredAdvisoryItems.length);
-    for (const item of filteredAdvisoryItems) {
-        const itemName = item.name;
-        if (!allTicketingItems.includes(itemName)) {
-            console.log(`Item ${itemName} is not in the array, moving to new group...`);
-            const mutation = `
-                    mutation {
-                        move_item_to_group (item_id: ${item.id}, group_id: "${targetGroupId}") {
-                            id
-                        }
-                    }
-                `;
-            await axios({
-                url: 'https://api.monday.com/v2',
-                method: 'post',
-                headers: {
-                    Authorization: process.env.MONDAY_API_KEY,
-                    'Content-Type': 'application/json'
-                },
-                data: JSON.stringify({ query: mutation })
-            })
-                .then(response => {
-                    if (response.errors) {
-                        console.error("Error moving item:", response.errors);
-                    } else {
-                        console.log(`Item ${itemName} moved successfully.`);
-                    }
+                await axios({
+                    url: 'https://api.monday.com/v2',
+                    method: 'post',
+                    headers: {
+                        Authorization: process.env.MONDAY_API_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    data: JSON.stringify({ query: mutation })
                 })
-                .catch(error => {
-                    console.error("Error during the mutation request:", error);
-                });
+                    .then(response => {
+                        if (response.errors) {
+                            console.error("Error moving item:", response.errors);
+                        } else {
+                            console.log(`Item ${itemName} moved successfully.`);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error during the mutation request:", error);
+                    });
+            }
         }
     }
-
-
+    catch (error) {
+        console.error("An error occurred:", error.message);
+    } finally {
+        console.log("Execution completed.");
+    }
 }
 module.exports = { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack, sendTextMessage, createMondayTickeet, monday_Ticketing };

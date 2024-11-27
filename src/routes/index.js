@@ -19,6 +19,11 @@ const converted_commerical = tj.kml(commerical_kml);
 const airport_drone_kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Untitled.kml', "utf8"));
 const converted_airport = tj.kml(airport_drone_kml);
 
+app.get('/test', (req, res) => {
+    console.log('-------------------')
+    res.send('Data success!')
+})
+
 app.post('/booking-change', (req, res) => {
     const data = JSON.parse(req.body);
 
