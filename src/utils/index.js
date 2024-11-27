@@ -36,7 +36,10 @@ function cancelNotifyToSlack(photographer = "", orderName, bookingTime, cancella
 
     const formattedDate = simpleBookingTime.format('YYYY-MM-DD');
     const formattedTime = simpleBookingTime.format('HH:mm');
-    console.log('---------------------------Cancel', formattedDate, formattedTime);
+    const parts = orderName.split(' - ');
+    agentName = parts[0]
+    addressName = parts[1]
+    itemNameValue = photographer + " | " + addressName + " | " + agentName + " | " + formattedDate + "," + formattedTime;
 
     const itemColumnValues = {
         "status_1__1": "ADMIN",
@@ -52,7 +55,7 @@ function cancelNotifyToSlack(photographer = "", orderName, bookingTime, cancella
                         create_item (
                             board_id: 7012463051,
                             group_id: "group_title",
-                            item_name: "${orderName}",
+                            item_name: "${itemNameValue}",
                             column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
                         ) {
                         id
@@ -97,6 +100,11 @@ function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time,
     const scheduledTimeStart = moment.tz(schedule_time.split(' - ')[0], ["h:mm A"], timezone);
     const formattedDate = bookingDate.format('YYYY-MM-DD');
     const formattedTime = scheduledTimeStart.format('HH:mm');
+    const parts = orderName.split(' - ');
+    agentName = parts[0]
+    addressName = parts[1]
+    itemNameValue = photographer + " | " + addressName + " | " + agentName + " | " + formattedDate + "," + formattedTime;
+
     let flag = false;
 
     if (bookingDate.isSame(today, 'day')) {
@@ -119,7 +127,7 @@ function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time,
                         create_item (
                             board_id: 7012463051,
                             group_id: "group_title",
-                            item_name: "${orderName}",
+                            item_name: "${itemNameValue}",
                             column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
                         ) {
                         id
@@ -146,7 +154,7 @@ function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time,
                             create_item (
                                 board_id: 7012463051,
                                 group_id: "new_group__1",
-                                item_name:"${orderName}",
+                                item_name:"${itemNameValue}",
                                 column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
                             ) {
                             id
@@ -175,7 +183,7 @@ function isPointInPoly(poly, pt) {
  * @param {string} address - The address of the drone booking.
  * @param {string} date - The date of the drone booking.
  */
-function droneNotifySlack(type, address, day, time, timezone) {
+function droneNotifySlack(type, address, day, time, timezone, photographerName) {
     let text = '';
 
     if (type == 1) {
@@ -224,6 +232,11 @@ done and remove from booking. Unlocking licence required`;
     const scheduledTimeStart = moment.tz(time.split(' - ')[0], ["h:mm A"], timezone);
     const formattedDate = bookingDate.format('YYYY-MM-DD');
     const formattedTime = scheduledTimeStart.format('HH:mm');
+    const parts = address.split(' - ');
+    agentName = parts[0]
+    addressName = parts[1]
+    itemNameValue = photographerName + " | " + addressName + " | " + agentName + " | " + formattedDate + "," + formattedTime;
+    itemNameVlaue2 = parts[2] + " | " + parts[0] + " | " + parts[1];
     let flag = false;
     let type_Title;
     if (type === 10) {
@@ -239,61 +252,116 @@ done and remove from booking. Unlocking licence required`;
         const hoursDifference = scheduledTimeStart.diff(today, 'hours');
         if (Math.abs(hoursDifference) <= 2) {
             console.log('-------------------------------------------Same Hour: True');
-            const itemColumnValues = {
-                "status_1__1": "ADMIN",
-                "status": type_Title,
-                "date_10__1": formattedDate,
-                "status__1": 'CAUTION',
-                "hour4__1": {
-                    "hour": parseInt(formattedTime.split(':')[0]),
-                    "minute": parseInt(formattedTime.split(':')[1])
-                }
-            };
-            const query = `
-                    mutation {
-                        create_item (
-                            board_id: 7012463051,
-                            group_id: "group_title",
-                            item_name: "${address}",
-                            column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
-                        ) {
-                        id
-                        }
+            if (type === 10) {
+
+                const itemColumnValues = {
+                    "status_1__1": "ADMIN",
+                    "status": type_Title,
+                    "date_10__1": formattedDate,
+                    "status__1": 'CAUTION',
+                    "hour4__1": {
+                        "hour": parseInt(formattedTime.split(':')[0]),
+                        "minute": parseInt(formattedTime.split(':')[1])
                     }
-                    `;
-            createMondayTickeet(query);
-            flag = true;
-        }
-    }
-    if (flag === false) {
-        console.log('-------------------------------------------Same Day: False');
-
-        const itemColumnValues = {
-            "status_1__1": "ADMIN",
-            "status": type_Title,
-            "date_10__1": formattedDate,
-            "status__1": 'ADVISORY',
-            "hour4__1": {
-                "hour": parseInt(formattedTime.split(':')[0]),
-                "minute": parseInt(formattedTime.split(':')[1])
-            }
-        };
-
-        console.log('------------------------------------ItemColumValues:', itemColumnValues);
-
-        const query = `
+                };
+                const query = `
                         mutation {
                             create_item (
                                 board_id: 7012463051,
-                                group_id: "new_group__1",
-                                item_name: "${address}"
+                                group_id: "group_title",
+                                item_name: "${itemNameValue}",
                                 column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
                             ) {
                             id
                             }
                         }
                         `;
-        createMondayTickeet(query);
+                createMondayTickeet(query);
+                flag = true;
+            } else {
+                const itemColumnValues = {
+                    "status_1__1": "ADMIN",
+                    "status": type_Title,
+                    "date_10__1": formattedDate,
+                    "status__1": 'CAUTION',
+                    "hour4__1": {
+                        "hour": parseInt(formattedTime.split(':')[0]),
+                        "minute": parseInt(formattedTime.split(':')[1])
+                    }
+                };
+                const query = `
+                        mutation {
+                            create_item (
+                                board_id: 7012463051,
+                                group_id: "group_title",
+                                item_name: "${itemNameVlaue2}",
+                                column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
+                            ) {
+                            id
+                            }
+                        }
+                        `;
+                createMondayTickeet(query);
+                flag = true;
+            }
+        }
+    }
+    if (flag === false) {
+        console.log('-------------------------------------------Same Day: False');
+        if (type === 10) {
+
+            const itemColumnValues = {
+                "status_1__1": "ADMIN",
+                "status": type_Title,
+                "date_10__1": formattedDate,
+                "status__1": 'ADVISORY',
+                "hour4__1": {
+                    "hour": parseInt(formattedTime.split(':')[0]),
+                    "minute": parseInt(formattedTime.split(':')[1])
+                }
+            };
+
+            const query = `
+                            mutation {
+                                create_item (
+                                    board_id: 7012463051,
+                                    group_id: "new_group__1",
+                                    item_name: "${itemNameValue}"
+                                    column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
+                                ) {
+                                id
+                                }
+                            }
+                            `;
+            createMondayTickeet(query);
+        } else {
+            const itemColumnValues = {
+                "status_1__1": "ADMIN",
+                "status": type_Title,
+                "date_10__1": formattedDate,
+                "status__1": 'ADVISORY',
+                "hour4__1": {
+                    "hour": parseInt(formattedTime.split(':')[0]),
+                    "minute": parseInt(formattedTime.split(':')[1])
+                }
+            };
+
+            console.log('------------------------------------ItemColumValues:', itemColumnValues);
+
+            const query = `
+                        mutation {
+                            create_item (
+                                board_id: 7012463051,
+                                group_id: "new_group__1",
+                                item_name: "${itemNameVlaue2}"
+                                column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
+                            ) {
+                            id
+                            }
+                        }
+                        `;
+            createMondayTickeet(query);
+        }
     } else {
         flag = false;
     }
@@ -421,7 +489,7 @@ async function monday_Ticketing() {
                 let formattedTime = brisbaneHours + ":" + brisbaneMinutes.toString().padStart(2, '0');
 
                 items?.forEach(async element => {
-                    allTicketingItems.push(`${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}`)
+                    allTicketingItems.push(`EDITED ${element.name} | ${element.column_values[0].text} | ${element.column_values[1].text}`)
                     const delivery_time = element.column_values[2].text
                     const timeParts = delivery_time.split(':');
                     const minsutes = parseInt(timeParts[0], 10) * 60 + parseInt(timeParts[1], 10);
@@ -465,7 +533,7 @@ async function monday_Ticketing() {
                         const advisoryItems = advisoryResult.data.data.boards[0].groups[0].items_page.items;
                         console.log('----AdvisoruItems', advisoryItems.length);
 
-                        const advisoryItemExists = advisoryItems.some(advisoryItem => advisoryItem.name === `${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}`);
+                        const advisoryItemExists = advisoryItems.some(advisoryItem => advisoryItem.name === `EDITED ${element.name} | ${element.column_values[0].text} | ${element.column_values[1].text}`);
 
                         if (!advisoryItemExists) {
                             console.log('---not exist');
@@ -486,7 +554,7 @@ async function monday_Ticketing() {
                                     create_item (
                                         board_id: 7012463051,
                                         group_id: "new_group__1",
-                                        item_name: "${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}",
+                                        item_name: "EDITED ${element.name} | ${element.column_values[0].text} | ${element.column_values[1].text}",
                                         column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
                                     ) {
                                     id
@@ -558,7 +626,7 @@ async function monday_Ticketing() {
                 const items = result.data.data.boards[0].groups[0].items_page.items;
 
                 items?.forEach(async element => {
-                    allTicketingItems.push(`${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}`)
+                    allTicketingItems.push(`UPLOAD ${element.name} | ${element.column_values[0].text} | ${element.column_values[1].text}`)
                     const totalTime = element.column_values[2].text;
                     const [hours, minutes, seconds] = totalTime.split(':');
 
@@ -605,13 +673,21 @@ async function monday_Ticketing() {
                         const advisoryItems = advisoryResult.data.data.boards[0].groups[0].items_page.items;
                         console.log('----AdvisoruItems', advisoryItems.length);
 
-                        const advisoryItemExists = advisoryItems.some(advisoryItem => advisoryItem.name === `${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}`);
+                        const advisoryItemExists = advisoryItems.some(advisoryItem => advisoryItem.name === `UPLOAD ${element.name} | ${element.column_values[0].text} | ${element.column_values[1].text}`);
                         if (!advisoryItemExists) {
                             console.log('------------ not exist');
-
                             let today = new Date();
                             let formattedDate = today.getFullYear() + '-' + (today.getMonth() + 1).toString().padStart(2, '0') + '-' + today.getDate().toString().padStart(2, '0');
-                            let formattedTime = today.getHours() + ":" + today.getMinutes();
+
+                            // Get the current time in UTC
+                            let utcHours = today.getUTCHours();
+                            let utcMinutes = today.getUTCMinutes();
+
+                            // Adjust for Brisbane time (UTC +10)
+                            let brisbaneHours = (utcHours + 10) % 24; // Wrap around if over 24 hours
+                            let brisbaneMinutes = utcMinutes;
+                            let formattedTime = brisbaneHours + ":" + brisbaneMinutes.toString().padStart(2, '0');
+
                             const itemColumnValues = {
                                 "status_1__1": "EDITS",
                                 "status": 'TICKET',
@@ -627,7 +703,7 @@ async function monday_Ticketing() {
                                     create_item (
                                         board_id: 7012463051,
                                         group_id: "new_group__1",
-                                        item_name: "${element.name} - ${element.column_values[0].text} - ${element.column_values[1].text}",
+                                        item_name: "UPLOAD ${element.name} | ${element.column_values[0].text} | ${element.column_values[1].text}",
                                         column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
                                     ) {
                                     id
