@@ -494,11 +494,15 @@ async function monday_Ticketing() {
                 items?.forEach(async element => {
                     allTicketingItems.push(`EDITED ${element.name} | ${element.column_values[0].text} | ${element.column_values[1].text}`)
                     const delivery_time = element.column_values[2].text
+
                     const timeParts = delivery_time.split(':');
                     const minsutes = parseInt(timeParts[0], 10) * 60 + parseInt(timeParts[1], 10);
+                    console.log('---Delivery time:', delivery_time, minsutes);
 
 
                     if (minsutes >= 10) {
+                        console.log("Deliver time is bigger thatn 10 mins");
+
                         const advisoryQuery = `
                             query {
                                 boards (ids: 7012463051) {
@@ -534,7 +538,7 @@ async function monday_Ticketing() {
                         }
 
                         const advisoryItems = advisoryResult.data.data.boards[0].groups[0].items_page.items;
-                        console.log('----AdvisoruItems', advisoryItems.length);
+                        console.log('----AdvisoruItems eidts', advisoryItems.length);
 
                         const advisoryItemExists = advisoryItems.some(advisoryItem => advisoryItem.name === `EDITED ${element.name} | ${element.column_values[0].text} | ${element.column_values[1].text}`);
 

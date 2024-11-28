@@ -176,7 +176,7 @@ app.post('/webhook', (req, res) => {
                 droneNotifySlack(8, data.orderName, data.date, data.scheduled_time, data.property_address.timezone, photographerName)
             } else if (folders.length == 1 && folders[0] == 'Splays Never1') {
                 droneNotifySlack(9, data.orderName, data.date, data.scheduled_time, data.property_address.timezone, photographerName)
-            } else if (folders.length == 1 && folders[0] == 'New Airports') {
+            } else if (folders.length == 1 && folders[0] == 'New Airports' || placeMarkNames.includes('Redcliffe')) {
                 droneNotifySlack(12, data.orderName, data.date, data.scheduled_time, data.property_address.timezone, photographerName)
             }
         }
