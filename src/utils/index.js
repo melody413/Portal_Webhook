@@ -834,4 +834,5 @@ async function monday_Ticketing() {
         console.log("Execution completed.");
     }
 }
+
 module.exports = { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack, sendTextMessage, createMondayTickeet, monday_Ticketing };

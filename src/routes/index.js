@@ -7,7 +7,7 @@ const router = express.Router();
 const cron = require('node-cron');
 
 const { moment, app } = require('../config');
-const { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack, sendTextMessage } = require('../utils');
+const { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack, sendTextMessage, createMondayTickeet } = require('../utils');
 const { doNotSendPhotographers, allowedPhotographers, droneServices, geoShape, cityDroneServices } = require('../constant');
 const DOMParser = require("xmldom").DOMParser;
 const kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Airports1.kml', "utf8"));
@@ -207,5 +207,54 @@ app.post('/webhook', (req, res) => {
     }
     res.send('Data processed!');
 });
+
+
+app.post('/dialpad-webhook', (req, res) => {
+    let rawBody = '';
+    req.on('data', chunk => {
+        rawBody += chunk.toString();
+    });
+    req.on('end', () => {
+        console.log('Raw Body:', rawBody);
+        const data = JSON.parse(rawBody)
+        const phoneNumber = data.contact.phone;
+        const name = data.contact.name;
+        console.log('------------', data.state, phoneNumber, name)
+        if (data.state === 'missed') {
+            console.log('------------------Missed evenet appeared.');
+            const now = new Date(); // Current time
+            const formattedDate = moment(now).tz("Australia/Brisbane").format('YYYY-MM-DD');
+            const formattedTime = moment(now).tz("Australia/Brisbane").format('HH:mm');
+            const itemNameValue = phoneNumber + " | " + name + " | " + formattedTime + formattedDate;
+
+            const itemColumnValues = {
+                "status_1__1": "ADMIN",
+                "status": 'DIALPAD',
+                "date_10__1": formattedDate,
+                "hour4__1": {
+                    "hour": parseInt(formattedTime.split(':')[0]),
+                    "minute": parseInt(formattedTime.split(':')[1])
+                }
+            };
+
+            const query = `
+                    mutation {
+                        create_item (
+                            board_id: 7012463051,
+                            group_id: "group_title",
+                            item_name: "${itemNameValue}",
+                            column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
+                        ) {
+                        id
+                        }
+                    }
+                    `;
+            createMondayTickeet(query);
+
+        }
+    });
+
+    res.status(200).send('Webhook received!');
+})
 
 module.exports = router;
