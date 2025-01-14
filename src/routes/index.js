@@ -225,7 +225,7 @@ app.post('/dialpad-webhook', (req, res) => {
             const now = new Date(); // Current time
             const formattedDate = moment(now).tz("Australia/Brisbane").format('YYYY-MM-DD');
             const formattedTime = moment(now).tz("Australia/Brisbane").format('HH:mm');
-            const itemNameValue = phoneNumber + " | " + name + " | " + formattedTime + formattedDate;
+            const itemNameValue = phoneNumber + " | " + name;
 
             const itemColumnValues = {
                 "status_1__1": "ADMIN",
@@ -237,6 +237,7 @@ app.post('/dialpad-webhook', (req, res) => {
                 }
             };
 
+
             const query = `
                     mutation {
                         create_item (
@@ -246,6 +247,7 @@ app.post('/dialpad-webhook', (req, res) => {
                             column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
                         ) {
                         id
+                        
                         }
                     }
                     `;
