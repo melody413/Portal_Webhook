@@ -17,6 +17,7 @@ const axios = require('axios');
  * @param {Date} cancellationTime - The date and time when the booking was cancelled.
  */
 function cancelNotifyToSlack(photographer = "", orderName, bookingTime, cancellationTime) {
+
     const simpleBookingTime = moment(bookingTime).tz("Australia/Brisbane").format('MMMM Do, YYYY h:mm A');
     const simpleCancellationTime = moment(cancellationTime).tz("Australia/Brisbane").format('MMMM Do, YYYY h:mm A');
 
@@ -829,7 +830,7 @@ async function monday_Ticketing() {
         }
     }
     catch (error) {
-        console.error("An error occurred:", error.message);
+        console.error("Monday_Ticketing An error occurred:");
     } finally {
         console.log("Execution completed.");
     }
