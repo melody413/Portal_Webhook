@@ -5,6 +5,7 @@ const tj = require("@tmcw/togeojson");
 const turf = require('@turf/turf');
 const router = express.Router();
 const cron = require('node-cron');
+const axios = require("axios");
 
 const { moment, app } = require('../config');
 const { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack, sendTextMessage, createMondayTickeet } = require('../utils');
@@ -19,9 +20,43 @@ const converted_commerical = tj.kml(commerical_kml);
 const airport_drone_kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Untitled.kml', "utf8"));
 const converted_airport = tj.kml(airport_drone_kml);
 
-app.get('/test', (req, res) => {
+
+const SHEET_ID = "1nsg7GiRInIWkacmPdmxDOBxQ_7VeHu1efRgTAtwJeLM";
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+
+async function fetchDoNotSendPhotographers() {
+    try {
+        const response = await axios.get(SHEET_URL);
+        const rows = response.data.split("\n"); // Don't slice rows, include all
+
+        let doNotSendPhotographers = {};
+
+        // Start from the first row and handle it properly
+        rows.forEach(row => {
+            if (row.trim() === "") return; // Skip empty rows
+
+            const columns = row.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/g); // Properly split while keeping quoted values intact
+            const photographer = columns[0].replace(/"/g, "").trim(); // Remove any quotes
+            let clients = columns[1] ? columns[1].replace(/"/g, "").trim() : "";
+
+            // Convert to an array, handling empty values properly
+            doNotSendPhotographers[photographer] = clients
+                ? clients.split(/\s*,\s*/).map(client => client.trim()) // Split by commas and remove spaces
+                : [];
+        });
+
+        return doNotSendPhotographers;
+    } catch (error) {
+        console.error("Error fetching Google Sheet:", error);
+        return {};
+    }
+}
+
+
+app.get('/test', async (req, res) => {
     console.log('-------------------')
     res.send('Data success!')
+
 })
 
 app.post('/booking-change', (req, res) => {
@@ -98,14 +133,13 @@ app.post('/booking-change', (req, res) => {
 
         res.send('Data processed!');
     } catch (error) {
-        console.log("*** booking Change API Route")
+        console.log("*********************** booking Change API Route")
     }
 });
 
-app.post('/webhook', (req, res) => {
+app.post('/webhook', async (req, res) => {
     try {
         const data = JSON.parse(req.body);
-        // console.log('----Data:', data);
 
         const services = data.services;
         const services_a_la_cart = data.services_a_la_cart;
@@ -202,9 +236,10 @@ app.post('/webhook', (req, res) => {
         if (data.orderStatus === "pending") {
             for (let photographer of data.photographers) {
                 let photographerName = photographer.name;
+                doNotSendPhotographers1 = await fetchDoNotSendPhotographers();
 
-                if (doNotSendPhotographers.hasOwnProperty(photographerName)) {
-                    if (doNotSendPhotographers[photographerName].includes(data.client_full_name)) {
+                if (doNotSendPhotographers1.hasOwnProperty(photographerName)) {
+                    if (doNotSendPhotographers1[photographerName].includes(data.client_full_name)) {
                         customer2PhotographerNotifyToSlack(data.orderName, data.date, data.scheduled_time, data.client_full_name, photographerName, data.property_address.timezone)
                     }
                 }
@@ -223,7 +258,7 @@ app.post('/dialpad-webhook', (req, res) => {
             rawBody += chunk.toString();
         });
         req.on('end', () => {
-            console.log('Raw Body:', rawBody);
+            console.log('--------------------------------Raw Body:', rawBody);
             const data = JSON.parse(rawBody)
             const phoneNumber = data.contact.phone;
             const name = data.contact.name;

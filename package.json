@@ -13,7 +13,7 @@
     "@slack/web-api": "^7.0.4",
     "@tmcw/togeojson": "^5.8.1",
     "@turf/turf": "^7.0.0",
-    "axios": "^1.7.2",
+    "axios": "^1.8.1",
     "body-parser": "^1.20.2",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",

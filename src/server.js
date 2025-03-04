@@ -7,7 +7,7 @@ const { monday_Ticketing } = require('./utils');
 // Use JSON and URL-encoded parsers
 app.use("/", router);
 
-setInterval(monday_Ticketing, 90000)
+setInterval(monday_Ticketing, 150000)
 app.listen(port, () => console.log(`Server listening at http://localhost:${port}`));
 
 
