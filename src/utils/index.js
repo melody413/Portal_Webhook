@@ -49,7 +49,8 @@ function cancelNotifyToSlack(photographer = "", orderName, bookingTime, cancella
         "hour4__1": {
             "hour": parseInt(formattedTime.split(':')[0]),
             "minute": parseInt(formattedTime.split(':')[1])
-        }
+        },
+        "text_mknxedgf": `${formattedDate}, ${formattedTime}`
     };
     const query = `
                     mutation {
@@ -121,7 +122,8 @@ function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time,
                 "hour4__1": {
                     "hour": parseInt(formattedTime.split(':')[0]),
                     "minute": parseInt(formattedTime.split(':')[1])
-                }
+                },
+                "text_mknxedgf": `${formattedDate}, ${formattedTime}` // "Mar 10, 2025, 5:00 AM"
             };
             const query = `
                     mutation {
@@ -148,7 +150,8 @@ function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time,
             "hour4__1": {
                 "hour": parseInt(formattedTime.split(':')[0]),
                 "minute": parseInt(formattedTime.split(':')[1])
-            }
+            },
+            "text_mknxedgf": `${formattedDate}, ${formattedTime}` // "Mar 10, 2025, 5:00 AM"
         };
         const query = `
                         mutation {
@@ -266,7 +269,8 @@ done and remove from booking. Unlocking licence required`;
                     "hour4__1": {
                         "hour": parseInt(formattedTime.split(':')[0]),
                         "minute": parseInt(formattedTime.split(':')[1])
-                    }
+                    },
+                    "text_mknxedgf": `${formattedDate}, ${formattedTime}` // "Mar 10, 2025, 5:00 AM"
                 };
                 const query = `
                         mutation {
@@ -291,7 +295,9 @@ done and remove from booking. Unlocking licence required`;
                     "hour4__1": {
                         "hour": parseInt(formattedTime.split(':')[0]),
                         "minute": parseInt(formattedTime.split(':')[1])
-                    }
+                    },
+                    "text_mknxedgf": `${formattedDate}, ${formattedTime}`
+
                 };
                 const query = `
                         mutation {
@@ -322,7 +328,8 @@ done and remove from booking. Unlocking licence required`;
                 "hour4__1": {
                     "hour": parseInt(formattedTime.split(':')[0]),
                     "minute": parseInt(formattedTime.split(':')[1])
-                }
+                },
+                "text_mknxedgf": `${formattedDate}, ${formattedTime}`
             };
 
             const query = `
@@ -347,7 +354,8 @@ done and remove from booking. Unlocking licence required`;
                 "hour4__1": {
                     "hour": parseInt(formattedTime.split(':')[0]),
                     "minute": parseInt(formattedTime.split(':')[1])
-                }
+                },
+                "text_mknxedgf": `${formattedDate}, ${formattedTime}`
             };
 
             console.log('------------------------------------ItemColumValues:', itemColumnValues);
@@ -546,16 +554,51 @@ async function monday_Ticketing() {
                         if (!advisoryItemExists) {
                             console.log('---not exist');
 
+                            let today = new Date();
+
+                            // Convert to Brisbane time (UTC +10)
+                            today.setHours(today.getUTCHours() + 10);
+
+                            // Format date as "Mar 10, 2025"
+                            let options = { year: 'numeric', month: 'short', day: 'numeric' };
+                            let formattedDate = today.toLocaleDateString('en-US', options);
+
+                            // Format time as "5:00 AM"
+                            let hours = today.getHours();
+                            let minutes = today.getMinutes().toString().padStart(2, '0');
+                            let ampm = hours >= 12 ? 'PM' : 'AM';
+                            hours = hours % 12 || 12; // Convert 24-hour to 12-hour format
+
+                            let formattedTime = `${hours}:${minutes} ${ampm}`;
+
+                            // Construct values
                             const itemColumnValues = {
                                 "status_1__1": "EDITS",
                                 "status": 'TICKET',
                                 "status__1": 'ADVISORY',
-                                "date_10__1": formattedDate,
+                                "date_10__1": {
+                                    "date": today.toISOString().split('T')[0], // YYYY-MM-DD
+                                    "time": today.toTimeString().split(' ')[0] // HH:MM:SS
+                                },
                                 "hour4__1": {
-                                    "hour": parseInt(formattedTime.split(':')[0]),
-                                    "minute": parseInt(formattedTime.split(':')[1])
-                                }
+                                    "hour": today.getHours(),
+                                    "minute": today.getMinutes()
+                                },
+                                "text_mknxedgf": `${formattedDate}, ${formattedTime}` // "Mar 10, 2025, 5:00 AM"
                             };
+
+                            console.log(itemColumnValues);
+
+                            // const itemColumnValues = {
+                            //     "status_1__1": "EDITS",
+                            //     "status": 'TICKET',
+                            //     "status__1": 'ADVISORY',
+                            //     "date_10__1": formattedDate,
+                            //     "hour4__1": {
+                            //         "hour": parseInt(formattedTime.split(':')[0]),
+                            //         "minute": parseInt(formattedTime.split(':')[1])
+                            //     }
+                            // };
 
                             const query = `
                                 mutation {
@@ -685,27 +728,40 @@ async function monday_Ticketing() {
                         if (!advisoryItemExists) {
                             console.log('------------ not exist');
                             let today = new Date();
-                            let formattedDate = today.getFullYear() + '-' + (today.getMonth() + 1).toString().padStart(2, '0') + '-' + today.getDate().toString().padStart(2, '0');
 
-                            // Get the current time in UTC
-                            let utcHours = today.getUTCHours();
-                            let utcMinutes = today.getUTCMinutes();
+                            // Convert to Brisbane time (UTC +10)
+                            today.setHours(today.getUTCHours() + 10);
 
-                            // Adjust for Brisbane time (UTC +10)
-                            let brisbaneHours = (utcHours + 10) % 24; // Wrap around if over 24 hours
-                            let brisbaneMinutes = utcMinutes;
-                            let formattedTime = brisbaneHours + ":" + brisbaneMinutes.toString().padStart(2, '0');
+                            // Format date as "Mar 10, 2025"
+                            let options = { year: 'numeric', month: 'short', day: 'numeric' };
+                            let formattedDate = today.toLocaleDateString('en-US', options);
 
+                            // Format time as "5:00 AM"
+                            let hours = today.getHours();
+                            let minutes = today.getMinutes().toString().padStart(2, '0');
+                            let ampm = hours >= 12 ? 'PM' : 'AM';
+                            hours = hours % 12 || 12; // Convert 24-hour to 12-hour format
+
+                            let formattedTime = `${hours}:${minutes} ${ampm}`;
+
+                            // Construct values
                             const itemColumnValues = {
                                 "status_1__1": "EDITS",
                                 "status": 'TICKET',
                                 "status__1": 'ADVISORY',
-                                "date_10__1": formattedDate,
+                                "date_10__1": {
+                                    "date": today.toISOString().split('T')[0], // YYYY-MM-DD
+                                    "time": today.toTimeString().split(' ')[0] // HH:MM:SS
+                                },
                                 "hour4__1": {
-                                    "hour": parseInt(formattedTime.split(':')[0]),
-                                    "minute": parseInt(formattedTime.split(':')[1])
-                                }
+                                    "hour": today.getHours(),
+                                    "minute": today.getMinutes()
+                                },
+                                "text_mknxedgf": `${formattedDate}, ${formattedTime}` // "Mar 10, 2025, 5:00 AM"
                             };
+
+                            console.log(itemColumnValues);
+
                             const query = `
                                 mutation {
                                     create_item (
