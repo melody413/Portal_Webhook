@@ -134,6 +134,8 @@ app.post('/booking-change', (req, res) => {
         res.send('Data processed!');
     } catch (error) {
         console.log("*********************** booking Change API Route")
+        res.status(500).json({ error: 'Internal Server Error' });
+
     }
 });
 
@@ -233,6 +235,7 @@ app.post('/webhook', async (req, res) => {
             console.log("None of the Drone Services are involved in services or services_a_la_cart");
         }
 
+
         if (data.orderStatus === "pending") {
             for (let photographer of data.photographers) {
                 let photographerName = photographer.name;
@@ -248,6 +251,8 @@ app.post('/webhook', async (req, res) => {
         res.send('Data processed!');
     } catch (error) {
         console.log("*** webhook API Route")
+        res.status(500).json({ error: 'Internal Server Error' });
+
     }
 });
 
@@ -302,6 +307,8 @@ app.post('/dialpad-webhook', (req, res) => {
         res.status(200).send('Webhook received!');
     } catch (error) {
         console.log("*** dialpad-webhook API Route")
+        res.status(500).json({ error: 'Internal Server Error' });
+
     }
 })
 

@@ -831,6 +831,8 @@ async function monday_Ticketing() {
     }
     catch (error) {
         console.error("Monday_Ticketing An error occurred:");
+        res.status(500).json({ error: 'Internal Server Error' });
+
     } finally {
         console.log("Execution completed.");
     }
