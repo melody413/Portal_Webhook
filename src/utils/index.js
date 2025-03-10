@@ -50,7 +50,7 @@ function cancelNotifyToSlack(photographer = "", orderName, bookingTime, cancella
             "hour": parseInt(formattedTime.split(':')[0]),
             "minute": parseInt(formattedTime.split(':')[1])
         },
-        "text_mknxedgf": `${formattedDate}, ${formattedTime}`
+        "text_mknxedgf": `${simpleBookingTime}`
     };
     const query = `
                     mutation {
@@ -123,7 +123,7 @@ function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time,
                     "hour": parseInt(formattedTime.split(':')[0]),
                     "minute": parseInt(formattedTime.split(':')[1])
                 },
-                "text_mknxedgf": `${formattedDate}, ${formattedTime}` // "Mar 10, 2025, 5:00 AM"
+                "text_mknxedgf": `${simpleBookingTime}` // "Mar 10, 2025, 5:00 AM"
             };
             const query = `
                     mutation {
@@ -151,7 +151,7 @@ function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time,
                 "hour": parseInt(formattedTime.split(':')[0]),
                 "minute": parseInt(formattedTime.split(':')[1])
             },
-            "text_mknxedgf": `${formattedDate}, ${formattedTime}` // "Mar 10, 2025, 5:00 AM"
+            "text_mknxedgf": `${simpleBookingTime}` // "Mar 10, 2025, 5:00 AM"
         };
         const query = `
                         mutation {
@@ -270,7 +270,7 @@ done and remove from booking. Unlocking licence required`;
                         "hour": parseInt(formattedTime.split(':')[0]),
                         "minute": parseInt(formattedTime.split(':')[1])
                     },
-                    "text_mknxedgf": `${formattedDate}, ${formattedTime}` // "Mar 10, 2025, 5:00 AM"
+                    "text_mknxedgf": `${simpleBookingTime}` // "Mar 10, 2025, 5:00 AM"
                 };
                 const query = `
                         mutation {
@@ -296,7 +296,7 @@ done and remove from booking. Unlocking licence required`;
                         "hour": parseInt(formattedTime.split(':')[0]),
                         "minute": parseInt(formattedTime.split(':')[1])
                     },
-                    "text_mknxedgf": `${formattedDate}, ${formattedTime}`
+                    "text_mknxedgf": `${simpleBookingTime}`
 
                 };
                 const query = `
@@ -329,7 +329,7 @@ done and remove from booking. Unlocking licence required`;
                     "hour": parseInt(formattedTime.split(':')[0]),
                     "minute": parseInt(formattedTime.split(':')[1])
                 },
-                "text_mknxedgf": `${formattedDate}, ${formattedTime}`
+                "text_mknxedgf": `${simpleBookingTime}`
             };
 
             const query = `
@@ -355,7 +355,7 @@ done and remove from booking. Unlocking licence required`;
                     "hour": parseInt(formattedTime.split(':')[0]),
                     "minute": parseInt(formattedTime.split(':')[1])
                 },
-                "text_mknxedgf": `${formattedDate}, ${formattedTime}`
+                "text_mknxedgf": `${simpleBookingTime}`
             };
 
             console.log('------------------------------------ItemColumValues:', itemColumnValues);
