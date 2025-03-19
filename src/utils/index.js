@@ -45,13 +45,10 @@ function cancelNotifyToSlack(photographer = "", orderName, bookingTime, cancella
     const itemColumnValues = {
         "status_1__1": "ADMIN",
         "status": 'FT CANCELLATION',
-        "date_10__1": formattedDate,
-        "hour4__1": {
-            "hour": parseInt(formattedTime.split(':')[0]),
-            "minute": parseInt(formattedTime.split(':')[1])
-        },
+        "status__1": 'ADVISORY',
         "text_mknxedgf": `${simpleBookingTime}`
     };
+
     const query = `
                     mutation {
                         create_item (
@@ -114,16 +111,12 @@ function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time,
         const hoursDifference = scheduledTimeStart.diff(today, 'hours');
         if (Math.abs(hoursDifference) <= 2) {
             console.log('-------------------------------------------FT Same Day: True');
+
             const itemColumnValues = {
                 "status_1__1": "ADMIN",
                 "status": 'DONT SEND PHOTOGRAPHER',
-                "date_10__1": formattedDate,
                 "status__1": 'CAUTION',
-                "hour4__1": {
-                    "hour": parseInt(formattedTime.split(':')[0]),
-                    "minute": parseInt(formattedTime.split(':')[1])
-                },
-                "text_mknxedgf": `${simpleBookingTime}` // "Mar 10, 2025, 5:00 AM"
+                "text_mknxedgf": `${orderDate}`
             };
             const query = `
                     mutation {
@@ -145,14 +138,10 @@ function customer2PhotographerNotifyToSlack(orderName, orderDate, schedule_time,
         const itemColumnValues = {
             "status_1__1": "ADMIN",
             "status": 'DONT SEND PHOTOGRAPHER',
-            "date_10__1": formattedDate,
             "status__1": 'ADVISORY',
-            "hour4__1": {
-                "hour": parseInt(formattedTime.split(':')[0]),
-                "minute": parseInt(formattedTime.split(':')[1])
-            },
-            "text_mknxedgf": `${simpleBookingTime}` // "Mar 10, 2025, 5:00 AM"
+            "text_mknxedgf": `${orderDate}`
         };
+
         const query = `
                         mutation {
                             create_item (
@@ -260,18 +249,13 @@ done and remove from booking. Unlocking licence required`;
         if (Math.abs(hoursDifference) <= 2) {
             console.log('-------------------------------------------Same Hour: True');
             if (type === 10) {
-
                 const itemColumnValues = {
                     "status_1__1": "ADMIN",
                     "status": type_Title,
-                    "date_10__1": formattedDate,
                     "status__1": 'CAUTION',
-                    "hour4__1": {
-                        "hour": parseInt(formattedTime.split(':')[0]),
-                        "minute": parseInt(formattedTime.split(':')[1])
-                    },
-                    "text_mknxedgf": `${simpleBookingTime}` // "Mar 10, 2025, 5:00 AM"
+                    "text_mknxedgf": `${bookingDate}, ${scheduledTimeStart}`
                 };
+
                 const query = `
                         mutation {
                             create_item (
@@ -287,18 +271,14 @@ done and remove from booking. Unlocking licence required`;
                 createMondayTickeet(query);
                 flag = true;
             } else {
+
                 const itemColumnValues = {
                     "status_1__1": "ADMIN",
                     "status": type_Title,
-                    "date_10__1": formattedDate,
                     "status__1": 'CAUTION',
-                    "hour4__1": {
-                        "hour": parseInt(formattedTime.split(':')[0]),
-                        "minute": parseInt(formattedTime.split(':')[1])
-                    },
-                    "text_mknxedgf": `${simpleBookingTime}`
-
+                    "text_mknxedgf": `${bookingDate}, ${scheduledTimeStart}`
                 };
+
                 const query = `
                         mutation {
                             create_item (
@@ -323,13 +303,8 @@ done and remove from booking. Unlocking licence required`;
             const itemColumnValues = {
                 "status_1__1": "ADMIN",
                 "status": type_Title,
-                "date_10__1": formattedDate,
                 "status__1": 'ADVISORY',
-                "hour4__1": {
-                    "hour": parseInt(formattedTime.split(':')[0]),
-                    "minute": parseInt(formattedTime.split(':')[1])
-                },
-                "text_mknxedgf": `${simpleBookingTime}`
+                "text_mknxedgf": `${bookingDate}, ${scheduledTimeStart}`
             };
 
             const query = `
@@ -349,13 +324,9 @@ done and remove from booking. Unlocking licence required`;
             const itemColumnValues = {
                 "status_1__1": "ADMIN",
                 "status": type_Title,
-                "date_10__1": formattedDate,
                 "status__1": 'ADVISORY',
-                "hour4__1": {
-                    "hour": parseInt(formattedTime.split(':')[0]),
-                    "minute": parseInt(formattedTime.split(':')[1])
-                },
-                "text_mknxedgf": `${simpleBookingTime}`
+                "text_mknxedgf": `${bookingDate}, ${scheduledTimeStart}`
+
             };
 
             console.log('------------------------------------ItemColumValues:', itemColumnValues);
@@ -577,14 +548,14 @@ async function monday_Ticketing() {
                                 "status_1__1": "EDITS",
                                 "status": 'TICKET',
                                 "status__1": 'ADVISORY',
-                                "date_10__1": {
-                                    "date": today.toISOString().split('T')[0], // YYYY-MM-DD
-                                    "time": today.toTimeString().split(' ')[0] // HH:MM:SS
-                                },
-                                "hour4__1": {
-                                    "hour": today.getHours(),
-                                    "minute": today.getMinutes()
-                                },
+                                // "date_10__1": {
+                                //     "date": today.toISOString().split('T')[0], // YYYY-MM-DD
+                                //     "time": today.toTimeString().split(' ')[0] // HH:MM:SS
+                                // },
+                                // "hour4__1": {
+                                //     "hour": today.getHours(),
+                                //     "minute": today.getMinutes()
+                                // },
                                 "text_mknxedgf": `${formattedDate}, ${formattedTime}` // "Mar 10, 2025, 5:00 AM"
                             };
 
@@ -750,14 +721,6 @@ async function monday_Ticketing() {
                                 "status_1__1": "EDITS",
                                 "status": 'TICKET',
                                 "status__1": 'ADVISORY',
-                                "date_10__1": {
-                                    "date": today.toISOString().split('T')[0], // YYYY-MM-DD
-                                    "time": today.toTimeString().split(' ')[0] // HH:MM:SS
-                                },
-                                "hour4__1": {
-                                    "hour": today.getHours(),
-                                    "minute": today.getMinutes()
-                                },
                                 "text_mknxedgf": `${formattedDate}, ${formattedTime}` // "Mar 10, 2025, 5:00 AM"
                             };
 
