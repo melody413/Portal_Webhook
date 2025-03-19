@@ -447,6 +447,7 @@ function sendMessage(phoneNumber) {
 }
 
 async function monday_Ticketing() {
+
     console.log("This function is called every X milliseconds");
     try {
         let allTicketingItems = []

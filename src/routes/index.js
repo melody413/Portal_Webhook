@@ -23,6 +23,34 @@ const converted_airport = tj.kml(airport_drone_kml);
 
 const SHEET_ID = "1nsg7GiRInIWkacmPdmxDOBxQ_7VeHu1efRgTAtwJeLM";
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+const SHEET_URL1 = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=1428483837`;
+
+async function fetchCancellPhotographers() {
+    try {
+        const response = await axios.get(SHEET_URL1);
+        const rows = response.data.split("\n"); // Don't slice rows, include all
+
+        let allowedPhotographers = [];
+
+        // Start from the first row and handle it properly
+        rows.forEach(row => {
+            if (row.trim() === "") return; // Skip empty rows
+
+            const columns = row.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/g); // Properly split while keeping quoted values intact
+            const photographerEmail = columns[0].replace(/"/g, "").trim(); // Remove any quotes
+
+            // Check if the email is in the allowed list
+            if (!allowedPhotographers.includes(photographerEmail)) {
+                allowedPhotographers.push(photographerEmail);
+            }
+        });
+
+        return allowedPhotographers;
+    } catch (error) {
+        console.error("Error fetching Google Sheet:", error);
+        return [];
+    }
+}
 
 async function fetchDoNotSendPhotographers() {
     try {
@@ -88,9 +116,12 @@ app.post('/booking-change', (req, res) => {
             const timeDifferenceInHours = (scheduledStartTime.getTime() - currentDateTime.getTime()) / (1000 * 60 * 60);
             console.log("time Difference:", timeDifferenceInHours);
 
+            let allowedPhotographers1 = fetchCancellPhotographers()
+
+            console.log('----------------------------------allowedPhotographers1:', allowedPhotographers1)
             // Check whether the booking photographer is in the allowed photographers list
             const isAllowNotify = photographers.some(photographer =>
-                allowedPhotographers.includes(photographer.email)
+                allowedPhotographers1.includes(photographer.email)
             );
 
             if (timeDifferenceInHours <= 4 && timeDifferenceInHours >= 0 && isAllowNotify) {
