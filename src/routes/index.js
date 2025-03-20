@@ -287,6 +287,7 @@ app.post('/webhook', async (req, res) => {
     }
 });
 
+//missed a call
 app.post('/dialpad-webhook', (req, res) => {
     try {
         let rawBody = '';
@@ -309,13 +310,9 @@ app.post('/dialpad-webhook', (req, res) => {
                 const itemColumnValues = {
                     "status_1__1": "ADMIN",
                     "status": 'DIALPAD',
-                    "date_10__1": formattedDate,
-                    "hour4__1": {
-                        "hour": parseInt(formattedTime.split(':')[0]),
-                        "minute": parseInt(formattedTime.split(':')[1])
-                    }
+                    "status__1": 'CAUTION',
+                    "text_mknxedgf": `${formattedDate}, ${formattedTime}`
                 };
-
 
                 const query = `
                         mutation {
@@ -343,4 +340,69 @@ app.post('/dialpad-webhook', (req, res) => {
     }
 })
 
+let messageBoard = {};
+function createResponseTimer(phoneNumber) {
+    return setTimeout(() => {
+        delete messageBoard[phoneNumber]; // Remove the message after 3 minutes if no response
+    }, 3 * 60 * 1000); // 3 minutes
+}
+
+//inbound text
+app.post('/dialpad-webhook1', (req, res) => {
+    try {
+        let rawBody = '';
+        req.on('data', chunk => {
+            rawBody += chunk.toString();
+        });
+        req.on('end', () => {
+            console.log('--------------------------------Raw Body SMS event:', rawBody);
+            const data = JSON.parse(rawBody)
+            const phoneNumber = data.contact.phone_number;
+            const name = data.contact.name;
+            const direction = data.direction;
+            const messageText = data.text;
+            const now = new Date();
+
+            console.log('------------', direction, messageText, name)
+            if (direction === 'inbound') {
+                console.log('------------------inbound text event appeared.');
+
+
+                const now = new Date(); // Current time
+                const formattedDate = moment(now).tz("Australia/Brisbane").format('YYYY-MM-DD');
+                const formattedTime = moment(now).tz("Australia/Brisbane").format('HH:mm');
+                const itemNameValue = phoneNumber + " | " + name;
+
+                const itemColumnValues = {
+                    "status_1__1": "ADMIN",
+                    "status": 'DIALPAD',
+                    "status__1": 'CAUTION',
+                    "text_mknxedgf": `${formattedDate}, ${formattedTime}`
+                };
+
+                const query = `
+                        mutation {
+                            create_item (
+                                board_id: 7012463051,
+                                group_id: "group_title",
+                                item_name: "${itemNameValue}",
+                                column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
+                            ) {
+                            id
+                            
+                            }
+                        }
+                        `;
+                createMondayTickeet(query);
+
+            }
+        });
+
+        res.status(200).send('Webhook received!');
+    } catch (error) {
+        console.log("*** dialpad-webhook API Route")
+        res.status(500).json({ error: 'Internal Server Error' });
+
+    }
+})
 module.exports = router;
