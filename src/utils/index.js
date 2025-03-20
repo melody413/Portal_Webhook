@@ -253,7 +253,7 @@ done and remove from booking. Unlocking licence required`;
                     "status_1__1": "ADMIN",
                     "status": type_Title,
                     "status__1": 'CAUTION',
-                    "text_mknxedgf": `${bookingDate}, ${scheduledTimeStart}`
+                    "text_mknxedgf": `${scheduledTimeStart}`
                 };
 
                 const query = `
@@ -276,7 +276,7 @@ done and remove from booking. Unlocking licence required`;
                     "status_1__1": "ADMIN",
                     "status": type_Title,
                     "status__1": 'CAUTION',
-                    "text_mknxedgf": `${bookingDate}, ${scheduledTimeStart}`
+                    "text_mknxedgf": `${scheduledTimeStart}`
                 };
 
                 const query = `
@@ -304,7 +304,7 @@ done and remove from booking. Unlocking licence required`;
                 "status_1__1": "ADMIN",
                 "status": type_Title,
                 "status__1": 'ADVISORY',
-                "text_mknxedgf": `${bookingDate}, ${scheduledTimeStart}`
+                "text_mknxedgf": `${scheduledTimeStart}`
             };
 
             const query = `

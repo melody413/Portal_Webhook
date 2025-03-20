@@ -305,7 +305,7 @@ app.post('/dialpad-webhook', (req, res) => {
                 const now = new Date(); // Current time
                 const formattedDate = moment(now).tz("Australia/Brisbane").format('YYYY-MM-DD');
                 const formattedTime = moment(now).tz("Australia/Brisbane").format('HH:mm');
-                const itemNameValue = phoneNumber + " | " + name;
+                const itemNameValue = "MISSED CALL |" + phoneNumber + " | " + name;
 
                 const itemColumnValues = {
                     "status_1__1": "ADMIN",
@@ -340,7 +340,7 @@ app.post('/dialpad-webhook', (req, res) => {
     }
 })
 
-let messageBoard = {};
+let messageStore = {};
 function createResponseTimer(phoneNumber) {
     return setTimeout(() => {
         delete messageBoard[phoneNumber]; // Remove the message after 3 minutes if no response
@@ -357,21 +357,17 @@ app.post('/dialpad-webhook1', (req, res) => {
         req.on('end', () => {
             console.log('--------------------------------Raw Body SMS event:', rawBody);
             const data = JSON.parse(rawBody)
-            const phoneNumber = data.contact.phone_number;
-            const name = data.contact.name;
             const direction = data.direction;
-            const messageText = data.text;
-            const now = new Date();
 
-            console.log('------------', direction, messageText, name)
             if (direction === 'inbound') {
-                console.log('------------------inbound text event appeared.');
-
-
+                console.log('------------------inbound text event appeared.', data);
+                const phoneNumber = data.contact.phone_number;
+                const name = data.contact.name;
+                const messageText = data.text;
                 const now = new Date(); // Current time
                 const formattedDate = moment(now).tz("Australia/Brisbane").format('YYYY-MM-DD');
                 const formattedTime = moment(now).tz("Australia/Brisbane").format('HH:mm');
-                const itemNameValue = phoneNumber + " | " + name;
+                const itemNameValue = "TEXT MESSAGE | " + name + " | " + messageText
 
                 const itemColumnValues = {
                     "status_1__1": "ADMIN",
@@ -380,21 +376,48 @@ app.post('/dialpad-webhook1', (req, res) => {
                     "text_mknxedgf": `${formattedDate}, ${formattedTime}`
                 };
 
-                const query = `
-                        mutation {
-                            create_item (
-                                board_id: 7012463051,
-                                group_id: "group_title",
-                                item_name: "${itemNameValue}",
-                                column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
-                            ) {
-                            id
-                            
-                            }
-                        }
-                        `;
-                createMondayTickeet(query);
+                // Set a timer to check for outbound messages
+                const timerId = setTimeout(() => {
+                    // Check if an outbound message was sent
+                    // if (!messageStore[phoneNumber]) {
+                    const query =
+                        `mutation {
+                                create_item (
+                                    board_id: 7012463051,
+                                    group_id: "group_title",
+                                    item_name: "${itemNameValue}",
+                                    column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
+                                ) {
+                                    id
+                                }
+                            }`;
+                    createMondayTickeet(query);
+                    // }
+                    delete messageStore[phoneNumber]; // Clean up the timer
+                }, 1800); // 3 minutes in milliseconds
 
+                messageStore[phoneNumber] = timerId;
+                // const query = `
+                //         mutation {
+                //             create_item (
+                //                 board_id: 7012463051,
+                //                 group_id: "group_title",
+                //                 item_name: "${itemNameValue}",
+                //                 column_values: "${JSON.stringify(itemColumnValues).replace(/"/g, '\\"')}"
+                //             ) {
+                //             id
+
+                //             }
+                //         }
+                //         `;
+                // createMondayTickeet(query);
+
+            } else {
+                console.log('------------------OutBound call')
+                if (messageStore[data.contact.phone_number]) {
+                    clearTimeout(messageStore[data.contact.phone_number]);
+                    delete messageStore[data.contact.phone_number];
+                }
             }
         });
 
