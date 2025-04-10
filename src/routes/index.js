@@ -9,7 +9,7 @@ const axios = require("axios");
 
 const { moment, app } = require('../config');
 const { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack, sendTextMessage, createMondayTickeet } = require('../utils');
-const { doNotSendPhotographers, allowedPhotographers, droneServices, geoShape, cityDroneServices } = require('../constant');
+const { droneServices, geoShape, cityDroneServices } = require('../constant');
 const DOMParser = require("xmldom").DOMParser;
 const kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Airports1.kml', "utf8"));
 const converted = tj.kml(kml);
