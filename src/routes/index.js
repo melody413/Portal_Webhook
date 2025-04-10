@@ -91,6 +91,7 @@ async function fetchDoNotSendPhotographers() {
 
 app.get('/test', async (req, res) => {
     console.log('-------------------')
+    await monday_Ticketing();
     res.send('Data success!')
 
 })
