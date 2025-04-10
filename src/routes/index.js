@@ -352,7 +352,7 @@ app.post('/dialpad-webhook', (req, res) => {
 })
 
 // Add the cron job route
-router.get('/api/cron/monday-ticketing', async (req, res) => {
+app.get('/api/cron/monday-ticketing', async (req, res) => {
     try {
         await monday_Ticketing();
         res.status(200).json({ message: 'Monday ticketing completed successfully' });
