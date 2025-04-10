@@ -11,13 +11,17 @@ const { moment, app } = require('../config');
 const { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack, sendTextMessage, createMondayTickeet } = require('../utils');
 const { droneServices, geoShape, cityDroneServices } = require('../constant');
 const DOMParser = require("xmldom").DOMParser;
-const kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Airports1.kml', "utf8"));
+
+const kmlFilePath = path.join(__dirname, '../../../Airports1.kml');
+const kml = new DOMParser().parseFromString(fs.readFileSync(kmlFilePath, "utf8"));
 const converted = tj.kml(kml);
 
-const commerical_kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Commercial.kml', "utf8"));
+const commericalKmlFilePath = path.join(__dirname, '../../../Commercial.kml');
+const commerical_kml = new DOMParser().parseFromString(fs.readFileSync(commericalKmlFilePath, "utf8"));
 const converted_commerical = tj.kml(commerical_kml);
 
-const airport_drone_kml = new DOMParser().parseFromString(fs.readFileSync(__dirname + '../../../Untitled.kml', "utf8"));
+const airportDroneKmlFilePath = path.join(__dirname, '../../../Untitled.kml');
+const airport_drone_kml = new DOMParser().parseFromString(fs.readFileSync(airportDroneKmlFilePath, "utf8"));
 const converted_airport = tj.kml(airport_drone_kml);
 
 
