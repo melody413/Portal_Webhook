@@ -15,7 +15,7 @@
     "crons": [
         {
             "path": "/api/cron/monday-ticketing",
-            "schedule": "*/2.5 * * * *"
+            "schedule": "*/5 * * * *"
         }
     ]
 }
