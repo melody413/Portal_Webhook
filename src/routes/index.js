@@ -6,6 +6,7 @@ const turf = require('@turf/turf');
 const router = express.Router();
 const cron = require('node-cron');
 const axios = require("axios");
+const { monday_Ticketing } = require('../utils');
 
 const { moment, app } = require('../config');
 const { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, droneNotifySlack, sendTextMessage, createMondayTickeet } = require('../utils');
@@ -349,5 +350,16 @@ app.post('/dialpad-webhook', (req, res) => {
 
     }
 })
+
+// Add the cron job route
+router.get('/api/cron/monday-ticketing', async (req, res) => {
+    try {
+        await monday_Ticketing();
+        res.status(200).json({ message: 'Monday ticketing completed successfully' });
+    } catch (error) {
+        console.error('Error in Monday ticketing cron job:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
 
 module.exports = router;
