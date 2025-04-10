@@ -12,15 +12,18 @@ const { cancelNotifyToSlack, customer2PhotographerNotifyToSlack, isPointInPoly, 
 const { droneServices, geoShape, cityDroneServices } = require('../constant');
 const DOMParser = require("xmldom").DOMParser;
 
-const kmlFilePath = path.join(__dirname, '../../../Airports1.kml');
+// Use process.cwd() to get the root directory
+const rootDir = process.cwd();
+
+const kmlFilePath = path.join(rootDir, 'Airports1.kml');
 const kml = new DOMParser().parseFromString(fs.readFileSync(kmlFilePath, "utf8"));
 const converted = tj.kml(kml);
 
-const commericalKmlFilePath = path.join(__dirname, '../../../Commercial.kml');
+const commericalKmlFilePath = path.join(rootDir, 'Commercial.kml');
 const commerical_kml = new DOMParser().parseFromString(fs.readFileSync(commericalKmlFilePath, "utf8"));
 const converted_commerical = tj.kml(commerical_kml);
 
-const airportDroneKmlFilePath = path.join(__dirname, '../../../Untitled.kml');
+const airportDroneKmlFilePath = path.join(rootDir, 'Untitled.kml');
 const airport_drone_kml = new DOMParser().parseFromString(fs.readFileSync(airportDroneKmlFilePath, "utf8"));
 const converted_airport = tj.kml(airport_drone_kml);
 

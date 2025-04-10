@@ -11,5 +11,10 @@
             "src": "/(.*)",
             "dest": "src/server.js"
         }
+    ],
+    "includeFiles": [
+        "Airports1.kml",
+        "Commercial.kml",
+        "Untitled.kml"
     ]
 }
