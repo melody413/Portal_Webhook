@@ -95,7 +95,7 @@ app.get('/test', async (req, res) => {
 
 })
 
-app.post('/booking-change', (req, res) => {
+app.post('/booking-change', async (req, res) => {
     try {
         const data = JSON.parse(req.body);
 
@@ -170,11 +170,12 @@ app.post('/booking-change', (req, res) => {
             // });
         }
 
+        // Call monday_Ticketing before sending response
+        await monday_Ticketing();
         res.send('Data processed!');
     } catch (error) {
         console.log("*********************** booking Change API Route")
         res.status(500).json({ error: 'Internal Server Error' });
-
     }
 });
 
@@ -287,11 +288,13 @@ app.post('/webhook', async (req, res) => {
                 }
             }
         }
+
+        // Call monday_Ticketing before sending response
+        await monday_Ticketing();
         res.send('Data processed!');
     } catch (error) {
         console.log("*** webhook API Route")
         res.status(500).json({ error: 'Internal Server Error' });
-
     }
 });
 
@@ -324,7 +327,6 @@ app.post('/dialpad-webhook', (req, res) => {
                     }
                 };
 
-
                 const query = `
                         mutation {
                             create_item (
@@ -339,27 +341,13 @@ app.post('/dialpad-webhook', (req, res) => {
                         }
                         `;
                 createMondayTickeet(query);
-
             }
         });
-
         res.status(200).send('Webhook received!');
     } catch (error) {
         console.log("*** dialpad-webhook API Route")
         res.status(500).json({ error: 'Internal Server Error' });
-
     }
 })
-
-// Add the cron job route
-app.get('/api/cron/monday-ticketing', async (req, res) => {
-    try {
-        await monday_Ticketing();
-        res.status(200).json({ message: 'Monday ticketing completed successfully' });
-    } catch (error) {
-        console.error('Error in Monday ticketing cron job:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
 
 module.exports = router;
