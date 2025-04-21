@@ -351,4 +351,23 @@ app.post('/dialpad-webhook', (req, res) => {
     }
 })
 
+app.post('/dialpad-webhook1', (req, res) => {
+    try {
+        let rawBody = '';
+        req.on('data', chunk => {
+            rawBody += chunk.toString();
+        });
+        req.on('end', () => {
+            console.log('--------------------------------Raw Body:', rawBody);
+            const data = JSON.parse(rawBody)
+            const phoneNumber = data.contact.phone;
+            const name = data.contact.name;
+        });
+        res.status(200).send('Webhook received!');
+    } catch (error) {
+        console.log("*** dialpad-webhook API Route")
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+})
+
 module.exports = router;
