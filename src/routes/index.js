@@ -358,7 +358,7 @@ app.post('/dialpad-webhook1', (req, res) => {
             rawBody += chunk.toString();
         });
         req.on('end', () => {
-            console.log('--------------------------------Raw Body:', rawBody);
+            console.log('--------------------------------Raw Body from dialpage message:', rawBody);
             const data = JSON.parse(rawBody)
             const phoneNumber = data.contact.phone;
             const name = data.contact.name;
