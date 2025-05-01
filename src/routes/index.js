@@ -99,7 +99,7 @@ app.get('/test', async (req, res) => {
 app.post('/booking-change', async (req, res) => {
     try {
         const data = JSON.parse(req.body);
-
+        console.log('----------------------', data)
         if (data.orderStatus === 'cancelled') {
             const photographers = data.photographers;
             const orderName = data.orderName;
@@ -183,6 +183,7 @@ app.post('/booking-change', async (req, res) => {
 app.post('/webhook', async (req, res) => {
     try {
         const data = JSON.parse(req.body);
+        console.log('----------------------', data)
 
         const services = data.services;
         const services_a_la_cart = data.services_a_la_cart;
